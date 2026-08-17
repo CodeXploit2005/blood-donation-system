@@ -7,7 +7,7 @@
 ## 1. Công Nghệ Sử Dụng
 
 ### Frontend (Client)
-- **Framework**: React 18 + Vite + Pure JavaScript (`.jsx`).
+- **Framework**: React 18 + Vite + TypeScript (`.tsx`).
 - **Styling**: Tailwind CSS với theme tùy biến theo bảng màu nhân diện thương hiệu "Nhịp Sống".
 - **Typography**: `Fraunces` (Serif nhân văn cho Heading), `Inter` (Sans-serif cho UI/Body), `IBM Plex Mono` (Tabular-nums cho số liệu).
 - **Animation**: `framer-motion` (Page transitions, Heartbeat ECG path drawing hero, bottom-border pulse hover, multi-step slide, glass breathing QR card, laser scanning viewfinder, counter count-up).
