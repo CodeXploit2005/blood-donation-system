@@ -1,0 +1,1 @@
+// qrService.js
