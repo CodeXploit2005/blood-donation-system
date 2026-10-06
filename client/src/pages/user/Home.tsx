@@ -8,14 +8,8 @@ import {
   ShieldCheck,
   Activity,
   ArrowRight,
-  Droplet,
-  Users,
-  MapPin,
-  Clock,
-  Sparkles,
   QrCode,
   CheckCircle2,
-  FileText,
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import EventCard from '../../components/event/EventCard';
@@ -23,12 +17,13 @@ import PulseDivider from '../../components/common/PulseDivider';
 import Button from '../../components/common/Button';
 import BloodDonationCriteriaModal from '../../components/registration/BloodDonationCriteriaModal';
 import { CardSkeleton } from '../../components/common/Loading';
+import EmptyState from '../../components/common/EmptyState';
 
 export const Home = () => {
   const [isCriteriaModalOpen, setIsCriteriaModalOpen] = useState(false);
 
   // Fetch open events
-  const { data: eventsData, isLoading } = useQuery({
+  const { data: eventsData, isLoading, isError, refetch } = useQuery({
     queryKey: ['home-events'],
     queryFn: () => eventService.getEvents({ status: 'open', limit: 3 }),
   });
@@ -37,26 +32,38 @@ export const Home = () => {
 
   return (
     <div className="space-y-16 sm:space-y-24">
-      {/* 1. HERO SECTION WITH SIGNATURE SVG PULSE-LINE PATH DRAWING */}
-      <section className="relative pt-4 pb-12 sm:pb-20 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left Text Column */}
+      {/* HERO SECTION */}
+      <section className="relative isolate overflow-hidden rounded-[2rem] border border-sand dark:border-white/10 bg-[#F4EDE5] dark:bg-[#181D20] shadow-warm-lg">
+        <div className="relative h-64 sm:h-80 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]">
+          <img
+            src="/images/blood-donation-vietnam.jpg"
+            alt="Bạn trẻ tham gia hiến máu tại Viện Huyết học – Truyền máu Trung ương, Việt Nam"
+            width={1800}
+            height={1200}
+            fetchPriority="high"
+            className="h-full w-full object-cover object-[40%_center] lg:object-[35%_center]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#F4EDE5] via-transparent to-transparent dark:from-[#181D20] lg:hidden" aria-hidden="true" />
+          <div className="absolute inset-0 hidden lg:block bg-[linear-gradient(90deg,#F4EDE5_0%,rgba(244,237,229,0.96)_10%,rgba(244,237,229,0.55)_24%,transparent_42%)] dark:bg-[linear-gradient(90deg,#181D20_0%,rgba(24,29,32,0.96)_10%,rgba(24,29,32,0.55)_24%,transparent_42%)]" aria-hidden="true" />
+        </div>
+        <div className="relative z-10 px-6 pb-8 sm:px-10 sm:pb-10 lg:px-12 lg:py-16 xl:px-14 xl:py-20">
+          {/* Banner content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-7 space-y-6"
+            className="max-w-2xl lg:w-[52%] space-y-6"
           >
             {/* Top pill badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-crimson-light dark:bg-[#2A181B] dark:border-crimson/50 border border-crimson/30 text-crimson dark:text-[#F7D4D8] text-xs font-bold shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-crimson-light dark:bg-[#2A181B] dark:border-transparent border border-crimson/30 text-crimson dark:text-[#F7D4D8] text-xs font-bold shadow-sm dark:shadow-none">
               <Activity className="w-4 h-4 animate-pulse text-crimson dark:text-[#FFB0B8]" />
               <span>Nền Tảng Đăng Ký Hiến Máu Trực Tuyến Quốc Gia</span>
             </div>
 
             {/* Main Heading */}
-            <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold text-ink dark:text-white tracking-tight leading-[1.15]">
+            <h1 className="font-display text-3xl sm:text-5xl lg:text-5xl xl:text-6xl font-extrabold text-ink dark:text-white tracking-tight leading-[1.15]">
               Mỗi Nhịp Tim Sẻ Chia, <br className="hidden sm:block" />
-              <span className="text-crimson underline decoration-sand dark:decoration-crimson/40 decoration-wavy decoration-from-font">
+              <span className="text-crimson">
                 Một Cuộc Đời
               </span>{' '}
               Ở Lại.
@@ -91,7 +98,7 @@ export const Home = () => {
             </div>
 
             {/* Quick stats micro pills */}
-            <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-ink-muted dark:text-gray-400 border-t border-sand/60 dark:border-white/10">
+            <div className="pt-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs text-ink-muted dark:text-gray-400 border-t border-sand/60 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-sage" />
                 <span>Bảo mật y tế theo chuẩn</span>
@@ -107,110 +114,13 @@ export const Home = () => {
             </div>
           </motion.div>
 
-          {/* Right Signature SVG Heartbeat Canvas */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="lg:col-span-5 relative"
-          >
-            <div className="relative p-8 sm:p-10 rounded-3xl bg-porcelain-card dark:bg-[#1A1E22] border border-sand dark:border-white/10 shadow-warm-lg overflow-hidden">
-              {/* Top Card Badge */}
-              <div className="flex items-center justify-between pb-6 border-b border-sand dark:border-white/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-crimson flex items-center justify-center text-white shadow-pulse-glow">
-                    <Heart className="w-5 h-5 fill-current animate-pulse" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-ink dark:text-white text-base">Nhịp Đập Sự Sống</h3>
-                    <p className="text-[11px] text-ink-muted dark:text-gray-400">Tín hiệu tiếp nhận máu trực tiếp</p>
-                  </div>
-                </div>
-                <span className="flex h-3 w-3 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-crimson opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-crimson"></span>
-                </span>
-              </div>
 
-              {/* Dynamic SVG ECG Wave Canvas */}
-              <div className="py-8 my-4 flex items-center justify-center">
-                <svg
-                  className="w-full text-crimson"
-                  height="120"
-                  viewBox="0 0 500 120"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M0 60 H120 L135 40 L150 85 L170 10 L195 110 L215 50 L230 75 L245 60 H500"
-                    stroke="#C4384A"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ecg-path-animation"
-                  />
-                </svg>
-              </div>
-
-              {/* Heart Pulse Visual Metrics Box */}
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-sand dark:border-white/10 text-xs">
-                <div className="p-3.5 rounded-2xl bg-sand-light/60 dark:bg-[#23282E] border border-sand dark:border-white/10">
-                  <span className="text-ink-muted dark:text-gray-400 text-[11px] block">Thể tích máu 1 lần hiến:</span>
-                  <span className="font-mono text-base font-bold text-crimson">350 - 450 ml</span>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-sand-light/60 dark:bg-[#23282E] border border-sand dark:border-white/10">
-                  <span className="text-ink-muted dark:text-gray-400 text-[11px] block">Số sinh mệnh cứu sống:</span>
-                  <span className="font-mono text-base font-bold text-sage-deep dark:text-sage">Đến 3 người bệnh</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
-      {/* 2. STATS COUNT-UP STRIP (Synchronized Light & Dark) */}
-      <section className="bg-porcelain-card dark:bg-[#1A1E22] rounded-3xl p-8 sm:p-12 shadow-warm-lg border border-sand dark:border-white/10 relative overflow-hidden transition-colors">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-crimson/5 blur-3xl pointer-events-none" />
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center relative z-10">
-          <div className="space-y-1">
-            <p className="font-display text-3xl sm:text-4xl font-extrabold text-crimson tabular-nums">
-              1,250+
-            </p>
-            <p className="text-xs text-ink-muted dark:text-gray-400 font-bold uppercase tracking-wider">
-              Lượt Đăng Ký Tình Nguyện
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <p className="font-display text-3xl sm:text-4xl font-extrabold text-ink dark:text-white tabular-nums">
-              437,500
-            </p>
-            <p className="text-xs text-ink-muted dark:text-gray-400 font-bold uppercase tracking-wider">
-              ml Máu Đã Tiếp Nhận
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <p className="font-display text-3xl sm:text-4xl font-extrabold text-sage-deep dark:text-sage tabular-nums">
-              100%
-            </p>
-            <p className="text-xs text-ink-muted dark:text-gray-400 font-bold uppercase tracking-wider">
-              Sàng Lọc Y Tế An Toàn
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <p className="font-display text-3xl sm:text-4xl font-extrabold text-ink dark:text-white tabular-nums">
-              45+
-            </p>
-            <p className="text-xs text-ink-muted dark:text-gray-400 font-bold uppercase tracking-wider">
-              Bệnh Viện & Cơ Sở Tiếp Nhận
-            </p>
-          </div>
-        </div>
-      </section>
-
+      <p className="!mt-3 text-right text-[10px] text-ink-muted dark:text-gray-400">
+        Ảnh: Quang Hải / <a href="https://vienhuyethoc.vn/mua-he-se-chia-nguoi-dan-chung-tay-hien-mau/" target="_blank" rel="noreferrer" className="underline underline-offset-2">Viện Huyết học – Truyền máu Trung ương</a>
+      </p>
       {/* 3. FEATURED BLOOD DONATION EVENTS */}
       <section className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -240,6 +150,23 @@ export const Home = () => {
             <CardSkeleton />
             <CardSkeleton />
           </div>
+        ) : isError ? (
+          <EmptyState
+            icon={Calendar}
+            title="Không thể tải danh sách sự kiện"
+            description="Máy chủ đang tạm thời không phản hồi. Vui lòng thử lại sau ít phút."
+            actionText="Thử lại"
+            onAction={() => refetch()}
+          />
+        ) : featuredEvents.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="Chưa có đợt hiến máu đang mở"
+            description="Các sự kiện mới sẽ được cập nhật tại đây. Bạn có thể xem toàn bộ lịch hoạt động."
+            actionText="Xem tất cả sự kiện"
+            onAction={() => window.location.assign('/events')}
+            actionVariant="outline"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredEvents.map((event, index) => (

@@ -14,6 +14,7 @@ import {
   UserCheck,
   AlertTriangle,
 } from 'lucide-react';
+import { useToast } from '../../components/common/Toast';
 import reportService from '../../services/reportService';
 import eventService from '../../services/eventService';
 import Loading from '../../components/common/Loading';
@@ -24,9 +25,12 @@ const RARE_TYPES = ['AB-', 'O-', 'B-', 'A-'];
 
 export const Reports = () => {
   const [selectedEventId, setSelectedEventId] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const { error: toastError } = useToast();
 
   // Fetch events list for dropdown
   const { data: eventsData, isLoading: isEventsLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['admin-events-reports-dropdown'],
     queryFn: () => eventService.getEvents({ limit: 100 }),
   });
@@ -36,6 +40,7 @@ export const Reports = () => {
 
   // Fetch event report data
   const { data: reportData, isLoading: isReportLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['admin-event-report', activeEventId],
     queryFn: () => reportService.getEventReport(activeEventId),
     enabled: !!activeEventId,
@@ -43,9 +48,12 @@ export const Reports = () => {
 
   const report = reportData?.data;
 
-  const handleExportCSV = () => {
-    if (!activeEventId) return;
-    window.location.href = reportService.exportEventReportCSVUrl(activeEventId);
+  const handleExportExcel = async () => {
+    if (!activeEventId || isExporting) return;
+    setIsExporting(true);
+    try { await reportService.exportEventReportExcel(activeEventId); }
+    catch (err) { toastError(err.message || 'Không thể xuất báo cáo Excel'); }
+    finally { setIsExporting(false); }
   };
 
   if (isEventsLoading) {
@@ -68,11 +76,11 @@ export const Reports = () => {
 
         <Button
           variant="primary"
-          onClick={handleExportCSV}
-          disabled={!activeEventId}
+          onClick={handleExportExcel}
+          disabled={!activeEventId || isExporting}
           leftIcon={<Download className="w-4 h-4" />}
         >
-          Xuất Báo Cáo (CSV / Excel)
+          Xuất Báo Cáo Excel (.xlsx)
         </Button>
       </div>
 
@@ -242,7 +250,7 @@ export const Reports = () => {
                       <td className="px-4 py-3 text-center font-mono">{r.weight} kg</td>
                       <td className="px-4 py-3 text-center">
                         <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage">
-                          {r.screeningResult?.doctorConclusion === 'eligible' ? 'Đủ ĐK' : 'Cần khám lại'}
+                          {({ eligible: 'Đủ điều kiện sơ bộ', ineligible: 'Không đủ điều kiện', deferred: 'Cần khám lại' })[r.screeningResult?.doctorConclusion] || 'Chưa có kết luận'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -259,7 +267,7 @@ export const Reports = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-mono font-bold text-sage-deep dark:text-sage">
-                        {r.donationStatus === 'donated' ? `${r.donationVolume || 350} ml` : '--'}
+                        {r.donationStatus === 'donated' ? r.donationVolume ? `${r.donationVolume} ml` : 'Chưa ghi thể tích' : '--'}
                       </td>
                     </tr>
                   ))}
@@ -269,7 +277,7 @@ export const Reports = () => {
 
             {report.registrations?.length > 10 && (
               <p className="text-xs text-ink-muted text-center pt-2">
-                Đang hiển thị 10 / {report.registrations.length} người. Xuất file CSV để xem đầy đủ toàn bộ danh sách.
+                Đang hiển thị 10 / {report.registrations.length} người. Xuất file Excel để xem đầy đủ toàn bộ danh sách.
               </p>
             )}
           </div>

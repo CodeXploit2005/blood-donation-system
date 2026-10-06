@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import useAuth from './hooks/useAuth';
@@ -11,6 +11,7 @@ import AuthLayout from './layouts/AuthLayout';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import PasswordRecovery from './pages/auth/PasswordRecovery';
 
 // User Pages
 import Home from './pages/user/Home';
@@ -31,8 +32,8 @@ import Reports from './pages/admin/Reports';
 import AccountsManagement from './pages/admin/AccountsManagement';
 
 // Protected Route wrappers
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false, staffOnly = false, donorOnly = false }) => {
+  const { isAuthenticated, isAdmin, isStaff, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -43,8 +44,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (adminOnly && !isAdmin) {
+  if ((adminOnly && !isAdmin) || (staffOnly && !isAdmin && !isStaff)) {
     return <Navigate to="/" replace />;
+  }
+
+  if (donorOnly && (isAdmin || isStaff)) {
+    return <Navigate to={isStaff ? '/staff/registrations' : '/admin/dashboard'} replace />;
   }
 
   return children;
@@ -52,6 +57,11 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
 // Page Transition wrapper with 8px subtle slide + fade
 const PageTransition = ({ children }) => {
+  // Reset when the incoming page mounts, after the previous page exits.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -101,7 +111,7 @@ export const App = () => {
           <Route
             path="/register-donation/:eventId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute donorOnly>
                 <PageTransition>
                   <RegisterDonation />
                 </PageTransition>
@@ -111,7 +121,7 @@ export const App = () => {
           <Route
             path="/my-registrations"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute donorOnly>
                 <PageTransition>
                   <MyRegistrations />
                 </PageTransition>
@@ -121,7 +131,7 @@ export const App = () => {
           <Route
             path="/my-qr"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute donorOnly>
                 <PageTransition>
                   <MyQRCode />
                 </PageTransition>
@@ -132,6 +142,8 @@ export const App = () => {
 
         {/* Auth Layout Routes */}
         <Route element={<AuthLayout />}>
+          <Route path="/forgot-password" element={<PageTransition><PasswordRecovery /></PageTransition>} />
+          <Route path="/reset-password" element={<PageTransition><PasswordRecovery /></PageTransition>} />
           <Route
             path="/login"
             element={
@@ -148,6 +160,12 @@ export const App = () => {
               </PageTransition>
             }
           />
+        </Route>
+
+        <Route path="/staff" element={<ProtectedRoute staffOnly><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/staff/registrations" replace />} />
+          <Route path="registrations" element={<PageTransition><RegistrationsManagement /></PageTransition>} />
+          <Route path="checkin" element={<PageTransition><Checkin /></PageTransition>} />
         </Route>
 
         {/* Admin Protected Layout Routes */}

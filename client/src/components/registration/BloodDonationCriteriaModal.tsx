@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from '../common/Modal';
-import { CheckCircle2, XCircle, AlertCircle, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 export const BloodDonationCriteriaModal = ({ isOpen, onClose }) => {
   return (
@@ -10,8 +10,15 @@ export const BloodDonationCriteriaModal = ({ isOpen, onClose }) => {
       title="Tiêu Chuẩn Tham Gia Hiến Máu Tình Nguyện"
       subtitle="Theo Thông tư của Bộ Y Tế và Viện Huyết học — Truyền máu Trung ương"
       maxWidth="max-w-2xl"
+      footer={
+        <div className="flex justify-end">
+          <button type="button" onClick={onClose} className="rounded-xl bg-crimson px-6 py-2.5 text-sm font-semibold text-white hover:bg-crimson-deep transition-colors">
+            Đã hiểu
+          </button>
+        </div>
+      }
     >
-      <div className="space-y-5 text-xs sm:text-sm text-ink dark:text-gray-200">
+      <div className="space-y-4 text-xs sm:text-sm leading-relaxed text-ink dark:text-gray-200">
         {/* Section 1: Eligible */}
         <div className="p-4 rounded-xl bg-sage-light/60 dark:bg-emerald-950/30 border border-sage/40 dark:border-emerald-700/50 space-y-2">
           <div className="flex items-center gap-2 font-bold text-sage-deep dark:text-emerald-300 text-sm sm:text-base">

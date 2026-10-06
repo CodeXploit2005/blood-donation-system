@@ -6,13 +6,13 @@ import {
   checkInSchema,
 } from '../controllers/checkinController';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { adminMiddleware } from '../middleware/adminMiddleware';
+import { staffMiddleware, checkinPermission } from '../middleware/adminMiddleware';
 import { validate } from '../middleware/validateMiddleware';
 
 const router = Router();
 
-router.post('/', authMiddleware, adminMiddleware, validate(checkInSchema), verifyAndCheckIn);
-router.get('/event/:eventId', authMiddleware, adminMiddleware, getEventCheckinList);
-router.post('/undo/:registrationId', authMiddleware, adminMiddleware, undoCheckIn);
+router.post('/', authMiddleware, staffMiddleware, checkinPermission, validate(checkInSchema), verifyAndCheckIn);
+router.get('/event/:eventId', authMiddleware, staffMiddleware, getEventCheckinList);
+router.post('/undo/:registrationId', authMiddleware, staffMiddleware, undoCheckIn);
 
 export default router;

@@ -9,20 +9,23 @@ import { evaluateHealthScreening } from '../services/screeningService';
 import { generateRegistrationQR } from '../services/qrService';
 import { successResponse, errorResponse } from '../utils/response';
 import { resolveEventStatus } from '../services/eventStatusService';
+import { donorBirthDate, donorPhone, donorName, donorEmail } from '../utils/donorValidation';
+import { birthDateError, vietnamToday } from '../utils/donorEligibility';
 
 export const createRegistrationSchema = z.object({
   body: z.object({
     eventId: z.string({ required_error: 'Vui lòng chọn đợt hiến máu' }).min(1, 'Mã đợt hiến máu là bắt buộc'),
-    fullName: z.string({ required_error: 'Vui lòng nhập họ và tên' }).min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
-    phone: z.string({ required_error: 'Vui lòng nhập số điện thoại' }).min(9, 'Số điện thoại không hợp lệ'),
-    email: z.string({ required_error: 'Vui lòng nhập email' }).email('Email không đúng định dạng'),
-    dateOfBirth: z.string().optional(),
+    fullName: donorName,
+    phone: donorPhone,
+    email: donorEmail,
+    dateOfBirth: donorBirthDate,
     gender: z.enum(['male', 'female', 'other'], { errorMap: () => ({ message: 'Vui lòng chọn giới tính' }) }).optional(),
     identityCardNumber: z.string().optional(),
     bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown']).default('unknown'),
     weight: z.coerce.number({ required_error: 'Vui lòng nhập cân nặng' }).min(35, 'Cân nặng phải từ 35kg trở lên'),
     height: z.coerce.number().optional(),
     preferredTimeSlot: z.string().default('08:00 - 10:00'),
+    agreeTerms: z.literal(true, { errorMap: () => ({ message: 'Bạn phải đồng ý với cam kết hiến máu tự nguyện' }) }),
     healthInfo: z
       .object({
         hasFever: z.boolean().default(false),
@@ -86,6 +89,13 @@ export const createRegistration = async (req: AuthRequest, res: Response): Promi
           : 'Đợt hiến máu này đã đóng cổng tiếp nhận hoặc đã hoàn thành',
         400
       );
+      return;
+    }
+
+    const referenceDate = [vietnamToday(), vietnamToday(event.startDate)].sort().at(-1)!;
+    const eligibilityError = birthDateError(dateOfBirth, referenceDate);
+    if (eligibilityError) {
+      errorResponse(res, eligibilityError, 422);
       return;
     }
 
@@ -227,7 +237,7 @@ export const getRegistrationById = async (req: AuthRequest, res: Response): Prom
 
     if (
       req.user &&
-      req.user.role !== 'admin' &&
+      !['admin', 'staff'].includes(req.user.role) &&
       registration.userId._id.toString() !== req.user._id.toString()
     ) {
       errorResponse(res, 'Bạn không có quyền truy cập đơn đăng ký này', 403);
@@ -308,9 +318,16 @@ export const getEventRegistrations = async (req: AuthRequest, res: Response): Pr
 
 export const updateRegistrationStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (req.body.donationStatus === 'cancelled') {
+      await cancelRegistration(req, res);
+      return;
+    }
     const { id } = req.params;
     const { donationStatus, confirmedBloodType, donationVolume, screeningResult } = req.body;
 
+    if (donationStatus === 'donated' && (!Number.isFinite(donationVolume) || donationVolume < 200 || donationVolume > 500 || !confirmedBloodType || confirmedBloodType === 'unknown')) {
+      errorResponse(res, 'Ghi nhận hiến máu cần thể tích thực tế 200–500 ml và nhóm máu đã xác nhận', 422); return;
+    }
     const updated = await Registration.findByIdAndUpdate(
       id,
       {
@@ -319,7 +336,7 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
         ...(donationVolume !== undefined && { donationVolume }),
         ...(screeningResult && { screeningResult }),
       },
-      { new: true }
+      { new: true, runValidators: true }
     ).populate('eventId', 'title');
 
     if (!updated) {
@@ -327,6 +344,9 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
       return;
     }
 
+    const participantCount = await Registration.countDocuments({ eventId: updated.eventId._id, donationStatus: { $ne: 'cancelled' } });
+    const donatedCount = await Registration.countDocuments({ eventId: updated.eventId._id, donationStatus: 'donated' });
+    await BloodDonationEvent.findByIdAndUpdate(updated.eventId._id, { $set: { currentParticipants: participantCount, collectedBloodUnits: donatedCount } });
     successResponse(res, updated, 'Cập nhật trạng thái đăng ký thành công');
   } catch (error: any) {
     errorResponse(res, error.message || 'Lỗi khi cập nhật đăng ký', 500, error);

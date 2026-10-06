@@ -13,6 +13,7 @@ export const MyQRCode = () => {
   const [selectedRegId, setSelectedRegId] = useState(null);
 
   const { data, isLoading, error } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['my-registrations-for-qr'],
     queryFn: () => registrationService.getMyRegistrations(),
   });

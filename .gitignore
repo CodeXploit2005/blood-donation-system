@@ -1,1 +1,18 @@
 // .gitignore
+
+# Credentials must remain local
+.env
+.env.*
+!.env.example
+
+# Persistent local development database
+server/.data/
+
+# Installed dependencies, generated bundles and local artifacts
+node_modules/
+dist/
+*.log
+.vercel/
+.build/
+output/
+docs/data-audit.json

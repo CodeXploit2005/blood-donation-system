@@ -52,9 +52,9 @@ export const Dashboard = () => {
   const [bloodTypeView, setBloodTypeView] = useState('confirmed'); // 'confirmed' | 'declared'
 
   const { data, isLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['admin-dashboard-stats'],
     queryFn: () => reportService.getDashboardReport(),
-    refetchInterval: 1000 * 30, // refresh every 30s
   });
 
   const stats = data?.data || {

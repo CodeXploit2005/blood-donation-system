@@ -25,7 +25,7 @@ import useAuth from '../../hooks/useAuth';
 export const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin, isStaff } = useAuth();
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
@@ -183,7 +183,11 @@ export const EventDetail = () => {
             </div>
 
             {/* Direct CTA */}
-            {event.status === 'open' ? (
+            {isAdmin || isStaff ? (
+              <Link to={isStaff ? '/staff/registrations' : `/admin/registrations?eventId=${event._id}`} className="block">
+                <Button variant="primary" size="lg" className="w-full">Xem danh sách đăng ký</Button>
+              </Link>
+            ) : event.status === 'open' ? (
               <Link to={`/register-donation/${event._id}`} className="block">
                 <Button
                   variant="primary"

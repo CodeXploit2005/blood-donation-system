@@ -2,8 +2,10 @@ import React from 'react';
 import { formatTime, formatDate } from '../../utils/formatDate';
 import { CheckCircle2, RotateCcw, Droplet, User, Phone, ShieldCheck } from 'lucide-react';
 import Button from '../common/Button';
+import useAuth from '../../hooks/useAuth';
 
 export const CheckinTable = ({ checkedInList = [], onUndoCheckIn, isUndoing = false }) => {
+  const { isStaff } = useAuth();
   if (checkedInList.length === 0) {
     return (
       <div className="p-8 rounded-2xl bg-sand-light/40 border border-sand text-center text-xs text-ink-muted">
@@ -55,15 +57,15 @@ export const CheckinTable = ({ checkedInList = [], onUndoCheckIn, isUndoing = fa
                 </td>
 
                 <td className="px-3 py-3 text-center font-bold font-mono text-sage-deep">
-                  {item.checkIn?.actualVolumeMl || 350} ml
+                  {item.donationStatus === 'donated' ? (item.donationVolume ? item.donationVolume + ' ml' : 'Chưa ghi thể tích') : 'Chưa hiến'}
                 </td>
 
                 <td className="px-4 py-3 text-ink-muted text-[11px] max-w-[200px] truncate">
-                  {item.checkIn?.nurseNotes || 'Thể trạng bình thường'}
+                  {item.checkIn?.nurseNotes || 'Chưa có ghi chú y tế'}
                 </td>
 
                 <td className="px-4 py-3 text-right">
-                  {onUndoCheckIn && (
+                  {onUndoCheckIn && (isStaff || item.donationStatus !== 'donated') && (
                     <button
                       onClick={() => onUndoCheckIn(item._id)}
                       disabled={isUndoing}

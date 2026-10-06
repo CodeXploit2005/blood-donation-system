@@ -32,7 +32,7 @@ export const Button = ({
     secondary:
       'bg-sage text-white hover:bg-sage-deep shadow-sm hover:shadow-sage-glow border border-transparent',
     outline:
-      'bg-transparent text-crimson border-2 border-crimson/40 hover:border-crimson hover:bg-crimson-light/60',
+      'bg-transparent text-crimson border-2 border-crimson/40 hover:border-crimson hover:bg-crimson-light/60 dark:border dark:border-slate-700 dark:bg-slate-800/60 dark:text-rose-300 dark:hover:border-slate-600 dark:hover:bg-slate-700/60',
     sand:
       'bg-sand text-ink hover:bg-sand-dark border border-sand-dark/50',
     ghost:

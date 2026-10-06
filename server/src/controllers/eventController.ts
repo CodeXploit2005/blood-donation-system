@@ -67,7 +67,7 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
     // Attach actual registered counts
     const eventIds = events.map((e) => e._id);
     const registrationCounts = await Registration.aggregate([
-      { $match: { eventId: { $in: eventIds }, registrationStatus: { $ne: 'cancelled' } } },
+      { $match: { eventId: { $in: eventIds }, donationStatus: { $ne: 'cancelled' } } },
       { $group: { _id: '$eventId', count: { $sum: 1 } } },
     ]);
 
@@ -108,8 +108,8 @@ export const getEventById = async (req: Request, res: Response): Promise<void> =
     }
 
     const [registrationCount, checkedInCount] = await Promise.all([
-      Registration.countDocuments({ eventId: event._id, registrationStatus: { $ne: 'cancelled' } }),
-      Registration.countDocuments({ eventId: event._id, 'checkIn.status': true }),
+      Registration.countDocuments({ eventId: event._id, donationStatus: { $ne: 'cancelled' } }),
+      Registration.countDocuments({ eventId: event._id, 'checkIn.status': 'checked_in' }),
     ]);
 
     const eventData = {
@@ -251,7 +251,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void
 
     const checkedInCount = await Registration.countDocuments({
       eventId: id,
-      'checkIn.status': true,
+      'checkIn.status': 'checked_in',
     });
 
     if (checkedInCount > 0) {

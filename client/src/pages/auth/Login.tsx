@@ -40,6 +40,8 @@ export const Login = () => {
         success('Đăng nhập thành công! Chào mừng bạn quay trở lại.');
         if (result.user.role === 'admin') {
           navigate('/admin/dashboard');
+        } else if (result.user.role === 'staff') {
+          navigate('/staff/registrations', { replace: true });
         } else {
           navigate(from, { replace: true });
         }
@@ -77,7 +79,7 @@ export const Login = () => {
             <input
               type="email"
               {...register('email')}
-              placeholder="Tên tài khoản"
+              placeholder="email@example.com"
               className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-sand bg-porcelain text-ink text-sm focus:border-crimson outline-none transition"
             />
           </div>
@@ -115,6 +117,9 @@ export const Login = () => {
           {errors.password && (
             <p className="text-xs text-rose-600 mt-1 font-medium">{errors.password.message}</p>
           )}
+          <div className="mt-2 text-right">
+            <Link to="/forgot-password" className="text-xs font-semibold text-crimson hover:underline">Quên mật khẩu?</Link>
+          </div>
         </div>
 
         <Button

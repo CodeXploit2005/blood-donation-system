@@ -1,6 +1,7 @@
 import api from './api';
 
 export const checkinService = {
+  lookup: async (data) => api.post('/checkin', { ...data, preview: true }),
   verifyAndCheckIn: async (data) => {
     return api.post('/checkin', data);
   },

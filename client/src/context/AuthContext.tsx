@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       setUser(registeredUser);
       return { success: true, user: registeredUser };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, status: error.status, fieldErrors: error.fieldErrors };
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
+    isStaff: user?.role === 'staff',
     login,
     register,
     logout,

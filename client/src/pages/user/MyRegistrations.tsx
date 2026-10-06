@@ -14,6 +14,7 @@ export const MyRegistrations = () => {
   const { success, error: toastError } = useToast();
 
   const { data, isLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['my-registrations'],
     queryFn: () => registrationService.getMyRegistrations(),
   });
@@ -22,7 +23,7 @@ export const MyRegistrations = () => {
     mutationFn: (id) => registrationService.cancelRegistration(id),
     onSuccess: () => {
       success('Hủy đăng ký hiến máu thành công');
-      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      queryClient.invalidateQueries();
     },
     onError: (err) => {
       toastError(err.message || 'Lỗi khi hủy đăng ký');

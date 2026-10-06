@@ -68,16 +68,74 @@ export const normalizeExistingData = async (): Promise<void> => {
 
 export const seedDatabase = async (): Promise<void> => {
   try {
+    if (process.env.NODE_ENV === 'production' && process.env.SEED_DEMO_DATA !== 'true') return;
     await normalizeExistingData();
 
-    const existingAdmin = await User.findOne({ email: 'admin@blooddonation.vn' });
-    if (existingAdmin) {
-      console.log('[Seed] Database users exist. Data normalized.');
+    const existingAdmin = await User.findOne({ role: 'admin' }).select('+password');
+    const adminUser = existingAdmin || (await User.create({
+      fullName: 'Ban Tổ Chức Hiến Máu',
+      email: process.env.SEED_ADMIN_EMAIL || 'admin@blooddonation.vn',
+      password: process.env.SEED_ADMIN_PASSWORD || 'Admin@123456',
+      phone: '0900000000',
+      role: 'admin',
+    }));
+
+    // Preserve existing credentials, including passwords changed through recovery.
+
+    const existingEventCount = await BloodDonationEvent.countDocuments();
+    if (existingEventCount > 0) {
+      console.log('[Seed] Database already contains events. Admin credentials updated.');
       return;
     }
 
     console.log('[Seed] Starting initial database seeding with rich demonstration data...');
-    
+    const [user1, user2, user3, user4] = await User.create([
+      {
+        fullName: 'Nguyễn Minh Anh',
+        email: 'minhanh@example.com',
+        password: 'User@123456',
+        phone: '0912345001',
+        role: 'user',
+        dateOfBirth: new Date('1998-05-12'),
+        gender: 'female',
+        bloodType: 'O+',
+        identityCardNumber: '001098000001',
+      },
+      {
+        fullName: 'Trần Quốc Bảo',
+        email: 'quocbao@example.com',
+        password: 'User@123456',
+        phone: '0912345002',
+        role: 'user',
+        dateOfBirth: new Date('1995-08-20'),
+        gender: 'male',
+        bloodType: 'A+',
+        identityCardNumber: '001095000002',
+      },
+      {
+        fullName: 'Lê Thu Hà',
+        email: 'thuha@example.com',
+        password: 'User@123456',
+        phone: '0912345003',
+        role: 'user',
+        dateOfBirth: new Date('2000-02-14'),
+        gender: 'female',
+        bloodType: 'B+',
+        identityCardNumber: '001100000003',
+      },
+      {
+        fullName: 'Phạm Đức Long',
+        email: 'duclong@example.com',
+        password: 'User@123456',
+        phone: '0912345004',
+        role: 'user',
+        dateOfBirth: new Date('1992-11-03'),
+        gender: 'male',
+        bloodType: 'AB+',
+        identityCardNumber: '001092000004',
+      },
+    ]);
+
     // 3. Create Blood Donation Events
     const now = new Date();
     const event1Start = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 1);

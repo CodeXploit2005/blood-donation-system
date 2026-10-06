@@ -5,8 +5,14 @@ export interface IUser extends Document {
   fullName: string;
   email: string;
   password?: string;
+  authVersion: number;
+  passwordResetOtpHash?: string;
+  passwordResetOtpAttempts?: number;
+  passwordResetOtpRequestedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   phone: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'staff' | 'admin';
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other';
   bloodType?: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown';
@@ -42,9 +48,15 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'Số điện thoại là bắt buộc'],
       trim: true,
     },
+    authVersion: { type: Number, default: 0, select: true },
+    passwordResetOtpHash: { type: String, select: false },
+    passwordResetOtpAttempts: { type: Number, select: false },
+    passwordResetOtpRequestedAt: { type: Date, select: false },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'staff', 'admin'],
       default: 'user',
     },
     dateOfBirth: {

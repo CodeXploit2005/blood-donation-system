@@ -10,6 +10,9 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
+    if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET must be configured in production');
+    }
     // 1. Connect to Database
     await connectDB();
 
@@ -33,6 +36,10 @@ const startServer = async () => {
       console.log(`[Environment] Mode: ${process.env.NODE_ENV || 'development'}`);
       console.log(`[API Base] http://localhost:${PORT}/api`);
       console.log('====================================================');
+    });
+    server.on('error', (error) => {
+      console.error(`[Server] Không thể mở cổng ${PORT}: ${error.message}`);
+      process.exit(1);
     });
 
     // Graceful shutdown handling

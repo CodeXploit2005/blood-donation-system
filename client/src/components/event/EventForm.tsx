@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { eventFormSchema } from '../../utils/validators';
@@ -6,10 +6,16 @@ import Button from '../common/Button';
 import { Calendar, MapPin, Building, Phone, Image, Users, FileText } from 'lucide-react';
 
 export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onCancel }) => {
+  const fileInputRef = useRef(null);
+  const [imageError, setImageError] = useState('');
+  const [isReadingImage, setIsReadingImage] = useState(false);
+  const [fileName, setFileName] = useState('');
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(eventFormSchema),
@@ -28,6 +34,32 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
       contactPhone: '',
     },
   });
+  const imageUrl = watch('imageUrl') || '';
+  const selectCover = (file) => {
+    if (!file || isReadingImage) return;
+    setImageError('');
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setImageError('Vui lòng chọn ảnh JPG, PNG, WEBP hoặc GIF.'); return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setImageError('Ảnh quá lớn. Vui lòng chọn tệp tối đa 2 MB.'); return;
+    }
+    setIsReadingImage(true);
+    const reader = new FileReader();
+    reader.onerror = () => { setImageError('Không thể đọc tệp ảnh. Vui lòng thử lại.'); setIsReadingImage(false); };
+    reader.onload = () => {
+      const value = String(reader.result);
+      const preview = new window.Image();
+      preview.onload = () => {
+        setValue('imageUrl', value, { shouldDirty: true, shouldValidate: true });
+        setFileName(file.name);
+        setIsReadingImage(false);
+      };
+      preview.onerror = () => { setImageError('Tệp không phải ảnh hợp lệ hoặc đã bị hỏng.'); setIsReadingImage(false); };
+      preview.src = value;
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -240,15 +272,42 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
 
         <div>
           <label className="block text-xs font-bold text-ink uppercase tracking-wider mb-1.5">
-            Link ảnh bìa (URL)
+            Link ảnh bìa (tùy chọn)
           </label>
           <input
             type="text"
-            {...register('imageUrl')}
+            value={imageUrl.startsWith('data:') ? '' : imageUrl}
+            onChange={(e) => { setValue('imageUrl', e.target.value, { shouldDirty: true }); setFileName(''); setImageError(''); }}
+            disabled={isReadingImage}
             placeholder="https://..."
             className="w-full px-3.5 py-2.5 rounded-xl border border-sand bg-porcelain-card text-ink text-sm focus:border-crimson focus:ring-1 focus:ring-crimson outline-none transition"
           />
         </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="block text-xs font-bold text-ink uppercase tracking-wider">Ảnh bìa từ máy của bạn</label>
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { selectCover(e.target.files?.[0]); e.target.value = ''; }} />
+        <button
+          type="button"
+          disabled={isReadingImage || isLoading}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); if (!isLoading) selectCover(e.dataTransfer.files[0]); }}
+          className="w-full rounded-2xl border border-dashed border-sand dark:border-slate-600 bg-porcelain p-5 text-center hover:border-crimson transition-colors disabled:opacity-50"
+        >
+          <Image className="mx-auto mb-2 h-6 w-6 text-crimson" />
+          <span className="block text-sm font-semibold text-ink">{isReadingImage ? 'Đang đọc ảnh…' : 'Chọn tệp hoặc kéo thả ảnh vào đây'}</span>
+          <span className="mt-1 block text-xs text-ink-muted">JPG, PNG, WEBP, GIF · Tối đa 2 MB</span>
+        </button>
+        {imageError && <p role="alert" className="text-xs text-rose-600 dark:text-rose-300">{imageError}</p>}
+        {imageUrl && <div className="overflow-hidden rounded-2xl border border-sand">
+          <img src={imageUrl} alt="Xem trước ảnh bìa sự kiện" className="h-44 sm:h-52 w-full object-cover" />
+          <div className="flex items-center justify-between gap-3 px-3 py-2">
+            <span className="truncate text-xs text-ink-muted">{fileName || 'Ảnh bìa hiện tại'}</span>
+            <button type="button" disabled={isReadingImage || isLoading} onClick={() => { setValue('imageUrl', '', { shouldDirty: true }); setFileName(''); setImageError(''); }} className="shrink-0 text-xs font-semibold text-crimson hover:underline">Bỏ ảnh</button>
+          </div>
+        </div>}
       </div>
 
       {/* Form Buttons */}
@@ -258,7 +317,7 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
             Hủy Bỏ
           </Button>
         )}
-        <Button className="w-full sm:w-auto px-2 sm:px-4" type="submit" variant="primary" isLoading={isLoading}>
+        <Button className="w-full sm:w-auto px-2 sm:px-4" type="submit" variant="primary" isLoading={isLoading} disabled={isReadingImage}>
           {initialData ? 'Cập Nhật Đợt Hiến Máu' : 'Tạo Đợt Hiến Máu Mới'}
         </Button>
       </div>

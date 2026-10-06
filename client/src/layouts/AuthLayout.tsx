@@ -1,10 +1,11 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Heart, Activity, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export const AuthLayout = () => {
   const { isDark, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-porcelain dark:bg-[#121518] text-ink dark:text-[#F7F3EF] px-4 py-8 relative overflow-hidden transition-colors">
@@ -56,7 +57,7 @@ export const AuthLayout = () => {
       </div>
 
       {/* Main Form Box */}
-      <div className="w-full max-w-md relative z-10">
+      <div className={`w-full ${pathname === '/register' ? 'max-w-2xl' : 'max-w-md'} relative z-10`}>
         <Outlet />
       </div>
 

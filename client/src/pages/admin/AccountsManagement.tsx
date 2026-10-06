@@ -20,7 +20,7 @@ export const AccountsManagement = () => {
     return users.filter((user) => [user.fullName, user.email, user.phone].some((value) => value?.toLowerCase().includes(keyword)));
   }, [search, users]);
 
-  const roleMutation = useMutation<any, Error, { id: string; role: 'admin' | 'user' }>({
+  const roleMutation = useMutation<any, Error, { id: string; role: 'admin' | 'staff' | 'user' }>({
     mutationFn: ({ id, role }) => authService.updateUserRole(id, role),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -53,7 +53,7 @@ export const AccountsManagement = () => {
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-crimson uppercase tracking-wider mb-1"><ShieldCheck className="w-4 h-4" /> Phân quyền hệ thống</div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink dark:text-white">Quản Lý Tài Khoản</h1>
-          <p className="text-xs text-ink-muted mt-1">Cấp quyền Admin hoặc User cho từng tài khoản đã đăng ký.</p>
+          <p className="text-xs text-ink-muted mt-1">Phân quyền người hiến máu, nhân viên y tế và quản trị viên.</p>
         </div>
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-ink-light dark:text-gray-200"><UsersRound className="w-4 h-4 text-crimson" /> {users.length} tài khoản · {adminCount} quản trị viên</div>
       </div>
@@ -73,8 +73,8 @@ export const AccountsManagement = () => {
               return <tr key={account._id} className="hover:bg-sand-light/30 dark:hover:bg-white/5">
                 <td className="px-5 py-4"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-full bg-crimson-light dark:bg-crimson/25 text-crimson dark:text-rose-300 flex items-center justify-center font-bold"><UserRound className="w-4 h-4" /></div><div><p className="font-bold text-ink dark:text-white">{account.fullName}{isCurrentUser && <span className="ml-2 text-[10px] text-crimson">(Bạn)</span>}</p><p className="text-ink-muted mt-0.5">{account.email}</p></div></div></td>
                 <td className="px-4 py-4 text-ink-light dark:text-gray-300">{account.phone}</td><td className="px-4 py-4 text-ink-muted">{formatDate(account.createdAt)}</td>
-                <td className="px-4 py-4 text-center"><span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold ${account.role === 'admin' ? 'bg-crimson-light dark:bg-crimson/25 text-crimson dark:text-rose-300' : 'bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage'}`}>{account.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}{account.role === 'admin' ? 'Admin' : 'User'}</span></td>
-                <td className="px-5 py-4 text-right"><select value={account.role} disabled={updating || isCurrentUser} onChange={(event) => roleMutation.mutate({ id: account._id, role: event.target.value as 'admin' | 'user' })} className="rounded-lg border border-sand dark:border-white/15 bg-porcelain dark:bg-ink-deep px-2.5 py-1.5 font-semibold text-ink dark:text-white outline-none focus:border-crimson disabled:opacity-60"><option value="user">User</option><option value="admin">Admin</option></select></td>
+                <td className="px-4 py-4 text-center"><span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold ${account.role === 'admin' ? 'bg-crimson-light dark:bg-crimson/25 text-crimson dark:text-rose-300' : 'bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage'}`}>{account.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}{account.role === 'admin' ? 'Quản trị viên' : account.role === 'staff' ? 'Nhân viên y tế' : 'Người hiến máu'}</span></td>
+                <td className="px-5 py-4 text-right"><select value={account.role} disabled={updating || isCurrentUser} onChange={(event) => roleMutation.mutate({ id: account._id, role: event.target.value as 'admin' | 'staff' | 'user' })} className="rounded-lg border border-sand dark:border-white/15 bg-porcelain dark:bg-ink-deep px-2.5 py-1.5 font-semibold text-ink dark:text-white outline-none focus:border-crimson disabled:opacity-60"><option value="user">Người hiến máu</option><option value="staff">Nhân viên y tế</option><option value="admin">Quản trị viên</option></select></td>
                 <td className="px-5 py-4 text-right"><button type="button" disabled={updating || isCurrentUser} onClick={() => handleDelete(account)} title={isCurrentUser ? 'Không thể xóa tài khoản đang đăng nhập' : `Xóa ${account.fullName}`} className="inline-flex items-center justify-center rounded-lg border border-rose-200 dark:border-rose-900/60 p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="w-4 h-4" /></button></td>
               </tr>;
             })}

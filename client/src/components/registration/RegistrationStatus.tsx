@@ -18,13 +18,15 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
     bloodType,
     weight,
     preferredTimeSlot,
-    registrationStatus = 'registered',
-    screeningResult = 'eligible',
+    donationStatus: registrationStatus = 'registered',
+    screeningResult: screeningData,
     screeningNotes,
     checkIn,
     qrCode,
     registeredAt,
   } = registration;
+
+  const screeningResult = screeningData?.doctorConclusion || 'pending_review';
 
   return (
     <div className="bg-porcelain-card dark:bg-[#1A1E22] rounded-3xl border border-sand dark:border-white/10 shadow-warm p-5 sm:p-6 transition-all hover:border-crimson/40 text-ink dark:text-porcelain">
@@ -41,10 +43,10 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
 
         <div className="flex items-center gap-2">
           {/* Check-in status badge */}
-          {checkIn?.status === 'checked_in' || registration.donationStatus === 'donated' ? (
+          {registrationStatus === 'donated' ? (
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage border border-sage/40 flex items-center gap-1.5 shadow-sm">
               <CheckCircle2 className="w-3.5 h-3.5 text-sage" />
-              Đã hiến {registration.donationVolume || checkIn?.actualVolumeMl || 350}ml
+              Đã hiến {registration.donationVolume ?? '—'}ml
             </span>
           ) : (
             <span
@@ -116,7 +118,7 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
         </span>
 
         <div className="flex items-center gap-2">
-          {registrationStatus !== 'cancelled' && !checkIn?.status && onCancel && (
+          {registrationStatus !== 'cancelled' && registrationStatus !== 'donated' && checkIn?.status !== 'checked_in' && onCancel && (
             <Button
               variant="ghost"
               size="sm"

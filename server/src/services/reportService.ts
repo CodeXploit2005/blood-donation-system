@@ -1,6 +1,7 @@
 import { BloodDonationEvent } from '../models/BloodDonationEvent';
 import { Registration } from '../models/Registration';
 import { Types } from 'mongoose';
+import { syncAutomaticEventStatuses } from './eventStatusService';
 
 const RARE_BLOOD_TYPES = ['AB-', 'O-', 'B-', 'A-'];
 const RARE_THRESHOLD = 2;
@@ -47,6 +48,7 @@ export interface DashboardStats {
 }
 
 export const getDashboardAnalytics = async (): Promise<DashboardStats> => {
+  await syncAutomaticEventStatuses();
   const [
     totalEvents,
     activeEvents,
@@ -75,7 +77,7 @@ export const getDashboardAnalytics = async (): Promise<DashboardStats> => {
                 {
                   $or: [
                     { $eq: ['$checkIn.status', 'checked_in'] },
-                    { $in: ['$donationStatus', ['checked_in', 'screened_eligible', 'donated']] },
+                    { $in: ['$donationStatus', ['checked_in', 'donated']] },
                   ],
                 },
                 1,
@@ -88,7 +90,7 @@ export const getDashboardAnalytics = async (): Promise<DashboardStats> => {
               $cond: [
                 {
                   $or: [
-                    { $eq: ['$screeningResult.doctorConclusion', 'eligible'] },
+                    { $and: [{ $eq: ['$screeningResult.doctorConclusion', 'eligible'] }, { $eq: ['$checkIn.status', 'checked_in'] }] },
                     { $eq: ['$donationStatus', 'donated'] },
                   ],
                 },
@@ -154,7 +156,7 @@ export const getDashboardAnalytics = async (): Promise<DashboardStats> => {
         $group: {
           _id: '$confirmedBloodType',
           count: { $sum: 1 },
-          totalVolume: { $sum: { $ifNull: ['$donationVolume', 350] } },
+          totalVolume: { $sum: { $ifNull: ['$donationVolume', 0] } },
         },
       },
       { $sort: { count: -1 } },
@@ -263,7 +265,7 @@ export const getDashboardAnalytics = async (): Promise<DashboardStats> => {
         },
         volumeMl: {
           $sum: {
-            $cond: [{ $eq: ['$donationStatus', 'donated'] }, { $ifNull: ['$donationVolume', 350] }, 0],
+            $cond: [{ $eq: ['$donationStatus', 'donated'] }, { $ifNull: ['$donationVolume', 0] }, 0],
           },
         },
       },
@@ -326,7 +328,7 @@ export const getEventFunnelAnalytics = async (eventId: string): Promise<FunnelSt
               {
                 $or: [
                   { $eq: ['$checkIn.status', 'checked_in'] },
-                  { $in: ['$donationStatus', ['checked_in', 'screened_eligible', 'donated']] },
+                  { $in: ['$donationStatus', ['checked_in', 'donated']] },
                 ],
               },
               1,
@@ -339,7 +341,7 @@ export const getEventFunnelAnalytics = async (eventId: string): Promise<FunnelSt
             $cond: [
               {
                 $or: [
-                  { $eq: ['$screeningResult.doctorConclusion', 'eligible'] },
+                  { $and: [{ $eq: ['$screeningResult.doctorConclusion', 'eligible'] }, { $eq: ['$checkIn.status', 'checked_in'] }] },
                   { $eq: ['$donationStatus', 'donated'] },
                 ],
               },

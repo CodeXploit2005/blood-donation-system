@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
@@ -10,6 +11,7 @@ export const Modal = ({
   children,
   maxWidth = 'max-w-lg',
   showClose = true,
+  footer = null,
 }) => {
   // Close on Escape key
   useEffect(() => {
@@ -34,10 +36,10 @@ export const Modal = ({
     };
   }, [isOpen]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
           {/* Backdrop Blur */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -54,7 +56,10 @@ export const Modal = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`relative z-10 flex w-full ${maxWidth} max-h-[100dvh] sm:max-h-[calc(100dvh-3rem)] flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl bg-porcelain-card dark:bg-[#1A1E22] shadow-2xl border border-sand dark:border-white/15 text-ink dark:text-porcelain`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || 'Thông tin'}
+            className={`relative z-10 flex w-full ${maxWidth} max-h-[calc(100dvh-1.5rem)] sm:max-h-[85dvh] flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-porcelain-card dark:bg-[#1A1E22] shadow-2xl border border-sand dark:border-white/15 text-ink dark:text-porcelain`}
           >
             {/* Top Accent Line */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-crimson via-crimson-deep to-sage"></div>
@@ -64,7 +69,7 @@ export const Modal = ({
               <div className="relative z-20 flex flex-none items-start justify-between gap-3 border-b border-sand/60 dark:border-white/10 px-4 pb-3 pt-5 sm:px-8 sm:pb-4 sm:pt-7 bg-porcelain-card dark:bg-[#1A1E22]">
                 <div className="min-w-0 pr-1">
                   {title && (
-                    <h3 className="font-display text-lg sm:text-2xl font-bold text-ink dark:text-white tracking-tight leading-tight">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-ink dark:text-white tracking-tight leading-snug">
                       {title}
                     </h3>
                   )}
@@ -89,10 +94,16 @@ export const Modal = ({
             <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-8 sm:py-6">
               {children}
             </div>
+            {footer && (
+              <div className="flex-none border-t border-sand/60 dark:border-white/10 px-4 py-3 sm:px-8 bg-porcelain-card dark:bg-[#1A1E22]">
+                {footer}
+              </div>
+            )}
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

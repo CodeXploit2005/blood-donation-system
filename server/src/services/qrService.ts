@@ -25,19 +25,15 @@ export const generateRegistrationQR = async (
   const token = hmac.digest('hex');
 
   // Payload encoded in QR Code
-  const qrPayload = JSON.stringify({
-    regId: registrationId,
-    code,
-    tok: token.substring(0, 16), // verification hash
-  });
+  const qrPayload = `${code}:${token.substring(0, 16)}`;
 
   // Generate Base64 Data URL with crimson color palette
   const dataUrl = await QRCode.toDataURL(qrPayload, {
-    errorCorrectionLevel: 'H',
-    margin: 2,
-    width: 320,
+    errorCorrectionLevel: 'M',
+    margin: 4,
+    width: 480,
     color: {
-      dark: '#1E2226', // ink color
+      dark: '#000000', // ink color
       light: '#FFFFFF',
     },
   });

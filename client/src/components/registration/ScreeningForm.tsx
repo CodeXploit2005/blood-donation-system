@@ -21,11 +21,13 @@ import {
 import { donationRegistrationSchema } from '../../utils/validators';
 import { BLOOD_TYPES, TIME_SLOTS } from '../../utils/constants';
 import Button from '../common/Button';
+import { birthDateBounds } from '../../utils/donorEligibility';
 
 export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) => {
   const [step, setStep] = useState(1);
   const [isSuccessMorphed, setIsSuccessMorphed] = useState(false);
   const [registrationResult, setRegistrationResult] = useState(null);
+  const dateBounds = birthDateBounds();
 
   const {
     register,
@@ -39,9 +41,9 @@ export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) =
       fullName: user?.fullName || '',
       phone: user?.phone || '',
       email: user?.email || '',
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : '1998-01-01',
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : '',
       gender: user?.gender || 'male',
-      identityCardNumber: user?.identityCardNumber || '001098001234',
+      identityCardNumber: user?.identityCardNumber || '',
       bloodType: user?.bloodType || 'unknown',
       weight: 55,
       height: 165,
@@ -54,7 +56,7 @@ export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) =
       isPregnantOrNursing: false,
       lastDonationDate: '',
       notes: '',
-      agreeTerms: true,
+      agreeTerms: false,
     },
   });
 
@@ -343,6 +345,8 @@ export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) =
                   </label>
                   <input
                     type="date"
+                    min={dateBounds.min}
+                    max={dateBounds.max}
                     {...register('dateOfBirth')}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-sand dark:border-white/10 bg-porcelain dark:bg-[#23282E] text-ink dark:text-white text-sm focus:border-crimson outline-none font-mono"
                   />

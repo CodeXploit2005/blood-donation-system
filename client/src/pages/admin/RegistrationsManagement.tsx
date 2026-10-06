@@ -46,6 +46,7 @@ export const RegistrationsManagement = () => {
 
   // Fetch events list for dropdown
   const { data: eventsData } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['admin-events-dropdown'],
     queryFn: () => eventService.getEvents({ limit: 100 }),
   });
@@ -55,6 +56,7 @@ export const RegistrationsManagement = () => {
 
   // Fetch registrations for selected event
   const { data, isLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: [
       'admin-event-registrations',
       activeEventId,
@@ -232,21 +234,17 @@ export const RegistrationsManagement = () => {
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                          SCREENING_RESULT_COLORS[reg.screeningResult]
+                          SCREENING_RESULT_COLORS[reg.screeningResult?.doctorConclusion] || 'text-ink-muted'
                         }`}
                       >
-                        {SCREENING_RESULT_LABELS[reg.screeningResult]}
+                        {SCREENING_RESULT_LABELS[reg.screeningResult?.doctorConclusion] || 'Chưa có kết luận'}
                       </span>
                     </td>
 
                     <td className="px-4 py-3 text-center">
-                      {reg.checkIn?.status ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sage-light text-sage-deep">
-                          Đã hiến {reg.checkIn.actualVolumeMl || 350}ml
-                        </span>
-                      ) : (
-                        <span className="text-ink-muted text-[11px]">Chờ check-in</span>
-                      )}
+                      <span className="text-xs font-semibold text-ink dark:text-porcelain">
+                        {reg.donationStatus === 'donated' ? (reg.donationVolume ? 'Đã hiến ' + reg.donationVolume + ' ml' : 'Đã hiến · chưa ghi thể tích') : REGISTRATION_STATUS_LABELS[reg.donationStatus] || 'Chưa điểm danh'}
+                      </span>
                     </td>
 
                     <td className="px-4 py-3 text-right">
@@ -362,25 +360,25 @@ export const RegistrationsManagement = () => {
                 </div>
               </div>
 
-              {selectedReg.screeningNotes && (
+              {selectedReg.screeningResult?.notes && (
                 <div className="mt-3 p-3 rounded-xl bg-sand-light border border-sand text-xs">
                   <span className="font-bold text-ink">Ghi chú y tế tự động: </span>
-                  <span className="text-ink-muted">{selectedReg.screeningNotes}</span>
+                  <span className="text-ink-muted">{selectedReg.screeningResult?.notes}</span>
                 </div>
               )}
             </div>
 
             {/* Check-in info if completed */}
-            {selectedReg.checkIn?.status && (
+            {selectedReg.checkIn?.status === 'checked_in' && (
               <div className="p-4 rounded-2xl bg-sage-light/60 border border-sage/40 space-y-1">
                 <div className="flex items-center gap-2 font-bold text-sage-deep">
                   <CheckCircle2 className="w-4 h-4 text-sage" />
-                  <span>Đã Tiếp Nhận Hiến Máu Thành Công</span>
+                  <span>{selectedReg.donationStatus === 'donated' ? 'Đã Hiến Máu' : 'Đã Điểm Danh Có Mặt'}</span>
                 </div>
                 <p className="text-[11px] text-ink">
                   Thời gian điểm danh: {formatDate(selectedReg.checkIn.checkInTime)} (
                   {formatTime(selectedReg.checkIn.checkInTime)}) | Lượng máu:{' '}
-                  <strong>{selectedReg.checkIn.actualVolumeMl || 350} ml</strong>
+                  <strong>{selectedReg.donationStatus === 'donated' ? selectedReg.donationVolume ?? 'Chưa ghi nhận' : 0} ml</strong>
                 </p>
                 <p className="text-[11px] text-ink-muted">
                   Ghi chú điều dưỡng: {selectedReg.checkIn.nurseNotes}

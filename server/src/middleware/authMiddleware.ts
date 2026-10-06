@@ -10,6 +10,7 @@ export interface AuthRequest extends Request {
 interface JwtPayload {
   id: string;
   role: string;
+  authVersion?: number;
 }
 
 export const authMiddleware = async (
@@ -42,6 +43,10 @@ export const authMiddleware = async (
     }
 
     req.user = currentUser;
+    if ((decoded.authVersion || 0) !== (currentUser.authVersion || 0)) {
+      errorResponse(res, 'Mật khẩu đã thay đổi. Vui lòng đăng nhập lại', 401);
+      return;
+    }
     next();
   } catch (err: any) {
     errorResponse(res, 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ', 401);

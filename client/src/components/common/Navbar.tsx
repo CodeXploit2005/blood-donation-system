@@ -22,7 +22,7 @@ import { useTheme } from '../../context/ThemeContext';
 import Button from './Button';
 
 export const Navbar = () => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isStaff, logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -38,12 +38,12 @@ export const Navbar = () => {
   const navLinkClasses = ({ isActive }) =>
     `relative px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all rounded-xl ${
       isActive
-        ? 'text-crimson dark:text-white font-bold bg-crimson-light/80 dark:bg-crimson/30 border border-crimson/20 dark:border-crimson/50 shadow-sm'
+        ? 'text-crimson dark:text-rose-300 font-bold bg-crimson-light/80 dark:bg-rose-950/50 border border-crimson/20 dark:border-transparent shadow-sm dark:shadow-none'
         : 'text-ink/80 dark:text-gray-200 hover:text-crimson dark:hover:text-white hover:bg-crimson-light/40 dark:hover:bg-white/10'
     }`;
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-sand/80 dark:border-white/10 transition-colors">
+    <header className="sticky top-0 z-40 w-full glass-panel border-b border-sand/80 dark:border-white/[0.06] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Brand Logo */}
@@ -70,7 +70,7 @@ export const Navbar = () => {
               Đợt Hiến Máu
             </NavLink>
 
-            {isAuthenticated && !isAdmin && (
+            {isAuthenticated && !isAdmin && !isStaff && (
               <>
                 <NavLink to="/my-registrations" className={navLinkClasses}>
                   Đăng Ký Của Tôi
@@ -81,8 +81,13 @@ export const Navbar = () => {
               </>
             )}
 
-            {isAdmin && (
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-sand dark:border-white/15">
+            {isStaff && (
+              <NavLink to="/staff/registrations" className={navLinkClasses}>
+                Tiếp nhận hiến máu
+              </NavLink>
+            )}
+                      {isAdmin && (
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-sand dark:border-white/[0.06]">
                 <NavLink to="/admin/dashboard" className={navLinkClasses}>
                   Dashboard
                 </NavLink>
@@ -98,7 +103,7 @@ export const Navbar = () => {
                     `flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition-all ${
                       isActive
                         ? 'bg-crimson text-white border-crimson shadow-pulse-glow'
-                        : 'border-crimson/40 dark:border-crimson/50 text-crimson dark:text-white dark:bg-crimson/20 hover:bg-crimson hover:text-white'
+                        : 'border-crimson/40 dark:border-transparent text-crimson dark:text-rose-300 dark:bg-rose-950/50 hover:bg-crimson hover:text-white dark:hover:bg-rose-900/60'
                     }`
                   }
                 >
@@ -114,7 +119,7 @@ export const Navbar = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl border border-sand dark:border-white/15 bg-porcelain-card dark:bg-[#1E232A] text-ink dark:text-amber-300 hover:text-crimson dark:hover:text-amber-200 hover:border-crimson/50 shadow-sm transition-all"
+              className="p-2.5 rounded-xl border border-sand dark:border-white/[0.06] bg-porcelain-card dark:bg-[#1E232A] text-ink dark:text-amber-300 hover:text-crimson dark:hover:text-amber-200 hover:border-crimson/50 dark:hover:border-slate-600 shadow-sm transition-all"
               title={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
               aria-label="Theme toggle"
             >
@@ -129,17 +134,17 @@ export const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="flex items-center gap-2.5 p-1.5 pl-3.5 rounded-full border border-sand dark:border-white/15 bg-porcelain-card dark:bg-[#1E232A] hover:border-crimson/50 transition-all text-left shadow-sm"
+                  className="flex items-center gap-2.5 p-1.5 pl-3.5 rounded-full border border-sand dark:border-white/[0.06] bg-porcelain-card dark:bg-[#1E232A] hover:border-crimson/50 dark:hover:border-slate-600 transition-all text-left shadow-sm"
                 >
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-ink dark:text-white leading-tight">
                       {user?.fullName}
                     </span>
                     <span className="text-[10px] text-ink-muted dark:text-gray-400 leading-tight">
-                      {isAdmin ? 'Quản trị viên' : user?.bloodType !== 'unknown' ? `Nhóm máu ${user?.bloodType}` : 'Người hiến máu'}
+                      {isStaff ? 'Nhân viên y tế' : isAdmin ? 'Quản trị viên' : user?.bloodType !== 'unknown' ? `Nhóm máu ${user?.bloodType}` : 'Người hiến máu'}
                     </span>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-crimson-light dark:bg-crimson/30 text-crimson dark:text-white flex items-center justify-center font-bold text-xs border border-crimson/30">
+                  <div className="w-8 h-8 rounded-full bg-crimson-light dark:bg-rose-950/50 text-crimson dark:text-white flex items-center justify-center font-bold text-xs border border-crimson/30">
                     {user?.fullName?.charAt(0) || 'U'}
                   </div>
                 </button>
@@ -152,14 +157,24 @@ export const Navbar = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1E232A] rounded-2xl shadow-2xl border border-sand dark:border-white/15 py-2 z-50 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1E232A] rounded-2xl shadow-2xl border border-sand dark:border-white/[0.06] py-2 z-50 overflow-hidden"
                       onMouseLeave={() => setIsUserDropdownOpen(false)}
                     >
-                      <div className="px-4 py-2.5 border-b border-sand/60 dark:border-white/10">
+                      <div className="px-4 py-2.5 border-b border-sand/60 dark:border-white/[0.06]">
                         <p className="text-[11px] text-ink-muted dark:text-gray-400">Đăng nhập với email</p>
                         <p className="text-xs font-bold text-ink dark:text-white truncate">{user?.email}</p>
                       </div>
 
+                      {isStaff && (
+                        <Link
+                          to="/staff/registrations"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-ink dark:text-gray-200 hover:bg-crimson-light/50 dark:hover:bg-white/10 hover:text-crimson transition-colors"
+                        >
+                          <ClipboardList className="w-4 h-4 shrink-0 text-crimson" />
+                          Tiếp nhận hiến máu
+                        </Link>
+                      )}
                       {isAdmin && (
                         <Link
                           to="/admin/dashboard"
@@ -171,7 +186,7 @@ export const Navbar = () => {
                         </Link>
                       )}
 
-                      {!isAdmin && (
+                      {!isAdmin && !isStaff && (
                         <>
                           <Link
                             to="/my-registrations"
@@ -225,7 +240,7 @@ export const Navbar = () => {
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl border border-sand dark:border-white/15 bg-porcelain-card dark:bg-[#1E232A] text-ink dark:text-amber-300 hover:text-crimson"
+              className="p-2 rounded-xl border border-sand dark:border-white/[0.06] bg-porcelain-card dark:bg-[#1E232A] text-ink dark:text-amber-300 hover:text-crimson"
               aria-label="Theme toggle"
             >
               {isDark ? (
@@ -236,8 +251,8 @@ export const Navbar = () => {
             </button>
 
             {isAuthenticated && (
-              <Link to={isAdmin ? '/admin/checkin' : '/my-qr'} className="p-2 text-crimson dark:text-white">
-                {isAdmin ? <ScanLine className="w-5 h-5" /> : <QrCode className="w-5 h-5" />}
+              <Link to={isStaff ? '/staff/checkin' : isAdmin ? '/admin/checkin' : '/my-qr'} className="p-2 text-crimson dark:text-white">
+                {isAdmin || isStaff ? <ScanLine className="w-5 h-5" /> : <QrCode className="w-5 h-5" />}
               </Link>
             )}
 
@@ -259,7 +274,7 @@ export const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-sand dark:border-white/15 bg-porcelain-card dark:bg-[#161A1E] px-4 pt-3 pb-6 space-y-3"
+            className="md:hidden border-t border-sand dark:border-white/[0.06] bg-porcelain-card dark:bg-[#161A1E] px-4 pt-3 pb-6 space-y-3"
           >
             <div className="flex flex-col space-y-1.5">
               <NavLink
@@ -278,7 +293,7 @@ export const Navbar = () => {
                 Đợt Hiến Máu
               </NavLink>
 
-              {isAuthenticated && !isAdmin && (
+              {isAuthenticated && !isAdmin && !isStaff && (
                 <>
                   <NavLink
                     to="/my-registrations"
@@ -297,8 +312,17 @@ export const Navbar = () => {
                 </>
               )}
 
-              {isAdmin && (
-                <div className="pt-2 mt-2 border-t border-sand dark:border-white/15 space-y-1">
+              {isStaff && (
+                <NavLink
+                  to="/staff/registrations"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={navLinkClasses}
+                >
+                  Tiếp nhận hiến máu
+                </NavLink>
+              )}
+                      {isAdmin && (
+                <div className="pt-2 mt-2 border-t border-sand dark:border-white/[0.06] space-y-1">
                   <p className="text-[10px] uppercase font-bold text-ink-muted dark:text-gray-400 px-3 tracking-wider">
                     Khu Vực Quản Trị
                   </p>
@@ -341,7 +365,7 @@ export const Navbar = () => {
               )}
             </div>
 
-            <div className="pt-3 border-t border-sand dark:border-white/15">
+            <div className="pt-3 border-t border-sand dark:border-white/[0.06]">
               {isAuthenticated ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 px-3 py-2 bg-sand-light dark:bg-[#222830] rounded-xl">

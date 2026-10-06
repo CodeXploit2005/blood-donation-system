@@ -6,7 +6,7 @@ import { errorResponse, successResponse } from '../utils/response';
 
 export const updateUserRoleSchema = z.object({
   body: z.object({
-    role: z.enum(['admin', 'user']),
+    role: z.enum(['admin', 'staff', 'user']),
   }),
 });
 
@@ -28,7 +28,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
 export const updateUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { role } = req.body as { role: 'admin' | 'user' };
+    const { role } = req.body as { role: 'admin' | 'staff' | 'user' };
     const targetUser = await User.findById(id);
 
     if (!targetUser) {
@@ -41,7 +41,7 @@ export const updateUserRole = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    if (targetUser.role === 'admin' && role === 'user') {
+    if (targetUser.role === 'admin' && role !== 'admin') {
       const adminCount = await User.countDocuments({ role: 'admin' });
       if (adminCount <= 1) {
         errorResponse(res, 'Hệ thống cần duy trì ít nhất một tài khoản quản trị', 400);
@@ -52,7 +52,7 @@ export const updateUserRole = async (req: AuthRequest, res: Response): Promise<v
     targetUser.role = role;
     await targetUser.save();
     const updatedUser = await User.findById(targetUser._id).select(publicUserFields);
-    successResponse(res, updatedUser, role === 'admin' ? 'Đã cấp quyền quản trị viên' : 'Đã chuyển tài khoản về người dùng');
+    successResponse(res, updatedUser, role === 'admin' ? 'Đã cấp quyền quản trị viên' : role === 'staff' ? 'Đã cấp quyền nhân viên y tế' : 'Đã chuyển tài khoản về người hiến máu');
   } catch (error: any) {
     errorResponse(res, error.message || 'Không thể cập nhật quyền tài khoản', 500, error);
   }

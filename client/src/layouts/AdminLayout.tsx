@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -22,17 +22,26 @@ import { useTheme } from '../context/ThemeContext';
 import Button from '../components/common/Button';
 
 export const AdminLayout = () => {
-  const { user, logout } = useAuth();
+  const { user, isStaff, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const contentRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const navItems = [
+  const navItems = isStaff ? [
+    { label: 'Danh Sách Đăng Ký', to: '/staff/registrations', icon: Users },
+    { label: 'Quét QR Điểm Danh', to: '/staff/checkin', icon: ScanLine, highlight: true },
+  ] : [
     { label: 'Bảng Điều Khiển', to: '/admin/dashboard', icon: LayoutDashboard, end: true },
     { label: 'Quản Lý Đợt Hiến', to: '/admin/events', icon: Calendar },
     { label: 'Danh Sách Đăng Ký', to: '/admin/registrations', icon: Users },
@@ -42,11 +51,11 @@ export const AdminLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen flex bg-porcelain dark:bg-[#121518] text-ink dark:text-porcelain">
+    <div className="h-dvh overflow-hidden flex bg-porcelain dark:bg-[#121518] text-ink dark:text-porcelain">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 border-r border-sand dark:border-white/10 bg-porcelain-card dark:bg-[#1A1E22] shadow-warm">
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 h-full overflow-hidden border-r border-sand dark:border-white/10 bg-porcelain-card dark:bg-[#1A1E22] shadow-warm">
         {/* Brand Logo & Theme toggle */}
-        <div className="p-5 border-b border-sand dark:border-white/10 flex items-center justify-between">
+        <div className="shrink-0 p-5 border-b border-sand dark:border-white/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-crimson flex items-center justify-center text-white shadow-sm">
               <Heart className="w-5 h-5 fill-current animate-pulse" />
@@ -56,7 +65,7 @@ export const AdminLayout = () => {
                 Nhịp Sống
               </span>
               <span className="text-[10px] text-crimson font-bold uppercase tracking-wider">
-                Admin Panel
+                {isStaff ? 'Nhân viên y tế' : 'Admin Panel'}
               </span>
             </div>
           </Link>
@@ -71,7 +80,7 @@ export const AdminLayout = () => {
         </div>
 
         {/* Nav list */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+        <nav className="min-h-0 flex-1 p-4 space-y-1.5 overflow-y-auto overscroll-contain">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -100,14 +109,14 @@ export const AdminLayout = () => {
         </nav>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-sand dark:border-white/10 bg-sand-light/30 dark:bg-[#161A1E]">
+        <div className="shrink-0 p-4 border-t border-sand dark:border-white/10 bg-sand-light/30 dark:bg-[#161A1E]">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-crimson-light dark:bg-crimson/30 text-crimson dark:text-white font-bold text-xs flex items-center justify-center border border-crimson/20">
               {user?.fullName?.charAt(0) || 'A'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-ink dark:text-white truncate">{user?.fullName}</p>
-              <p className="text-[10px] text-ink-muted dark:text-gray-400 truncate">Quản trị viên hệ thống</p>
+              <p className="text-[10px] text-ink-muted dark:text-gray-400 truncate">{isStaff ? 'Nhân viên tiếp nhận / y tế' : 'Quản trị viên hệ thống'}</p>
             </div>
           </div>
 
@@ -131,14 +140,14 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Main Admin Content Container */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Mobile Admin Header */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-porcelain-card dark:bg-[#1A1E22] border-b border-sand dark:border-white/10">
-          <Link to="/admin/dashboard" className="flex items-center gap-2">
+        <header className="lg:hidden shrink-0 z-30 flex items-center justify-between h-16 px-4 bg-porcelain-card dark:bg-[#1A1E22] border-b border-sand dark:border-white/10">
+          <Link to={isStaff ? '/staff/registrations' : '/admin/dashboard'} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-crimson flex items-center justify-center text-white">
               <Heart className="w-4 h-4 fill-current" />
             </div>
-            <span className="font-display font-bold text-base text-ink dark:text-white">Nhịp Sống Admin</span>
+            <span className="font-display font-bold text-base text-ink dark:text-white">Nhịp Sống {isStaff ? 'Y tế' : 'Admin'}</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -159,7 +168,7 @@ export const AdminLayout = () => {
 
         {/* Mobile Sidebar Dropdown */}
         {isSidebarOpen && (
-          <div className="lg:hidden border-b border-sand dark:border-white/10 bg-porcelain-card dark:bg-[#1A1E22] p-4 space-y-2">
+          <div className="lg:hidden shrink-0 max-h-[50dvh] overflow-y-auto overscroll-contain border-b border-sand dark:border-white/10 bg-porcelain-card dark:bg-[#1A1E22] p-4 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -194,8 +203,10 @@ export const AdminLayout = () => {
         )}
 
         {/* Admin Content Area */}
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto overflow-y-auto">
-          <Outlet />
+        <main ref={contentRef} className="min-h-0 flex-1 w-full overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+          <div className="p-4 sm:p-8 max-w-7xl w-full mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

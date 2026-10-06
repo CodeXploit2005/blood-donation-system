@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, MapPin, ShieldCheck, Heart } from 'lucide-react';
 import eventService from '../../services/eventService';
 import registrationService from '../../services/registrationService';
@@ -12,6 +12,7 @@ import { formatDate } from '../../utils/formatDate';
 
 export const RegisterDonation = () => {
   const { eventId } = useParams();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { success, warning, error: toastError } = useToast();
@@ -39,6 +40,7 @@ export const RegisterDonation = () => {
         weight: Number(formData.weight) || 50,
         height: formData.height ? Number(formData.height) : undefined,
         preferredTimeSlot: formData.preferredTimeSlot || '08:00 - 10:00',
+        agreeTerms: formData.agreeTerms,
         healthInfo: {
           hasFever: Boolean(formData.hasFever),
           hasChronicDisease: Boolean(formData.hasChronicDisease),
@@ -52,6 +54,7 @@ export const RegisterDonation = () => {
       };
 
       const response = await registrationService.createRegistration(payload);
+      queryClient.invalidateQueries();
       const isEligible = response.data?.screeningEvaluation?.result === 'eligible';
       if (isEligible) {
         success('Đăng ký tham gia hiến máu thành công! Mã QR đã được cấp.');

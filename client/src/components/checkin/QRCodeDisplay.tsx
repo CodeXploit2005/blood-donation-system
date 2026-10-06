@@ -29,11 +29,7 @@ export const QRCodeDisplay = ({ registration, user }) => {
   // Safe QR string calculation
   const qrString =
     qrCode?.code
-      ? JSON.stringify({
-          regId: String(_id),
-          code: qrCode.code,
-          tok: qrCode.token ? qrCode.token.substring(0, 16) : 'VERIFIED',
-        })
+      ? (qrCode.token ? `${qrCode.code}:${qrCode.token.substring(0, 16)}` : qrCode.code)
       : String(_id || 'BD-2026-DONATION');
 
   const downloadQR = () => {
@@ -72,19 +68,6 @@ export const QRCodeDisplay = ({ registration, user }) => {
       {/* Mobile-first Glass Breathing QR Card */}
       <motion.div
         ref={cardRef}
-        animate={{
-          scale: [1, 1.015, 1],
-          boxShadow: [
-            '0 10px 30px -5px rgba(196, 56, 74, 0.25)',
-            '0 15px 40px -5px rgba(196, 56, 74, 0.45)',
-            '0 10px 30px -5px rgba(196, 56, 74, 0.25)',
-          ],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
         className="w-full glass-qr rounded-3xl p-6 sm:p-8 relative overflow-hidden border border-crimson/40 bg-porcelain-card/90 dark:bg-ink-card/95"
       >
         {/* Subtle decorative background gradient */}
@@ -136,10 +119,11 @@ export const QRCodeDisplay = ({ registration, user }) => {
             <QRCodeSVG
               id="donation-qr-svg"
               value={qrString}
-              size={210}
-              level="H"
-              includeMargin={false}
-              fgColor="#1E2226"
+              size={256}
+              level="M"
+              includeMargin={true}
+              className="max-w-full h-auto"
+              fgColor="#000000"
             />
           </div>
 
@@ -179,7 +163,7 @@ export const QRCodeDisplay = ({ registration, user }) => {
           {isCheckedIn ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage border border-sage/40 text-xs font-bold shadow-sm">
               <ShieldCheck className="w-4 h-4 text-sage" />
-              <span>ĐÃ TIẾP NHẬN TẠI SỰ KIỆN ({registration.donationVolume || 350}ml)</span>
+              <span>{donationStatus === 'donated' ? (registration.donationVolume ? `ĐÃ HIẾN ${registration.donationVolume} ml` : 'ĐÃ HIẾN · CHƯA GHI THỂ TÍCH') : 'ĐÃ ĐIỂM DANH TẠI SỰ KIỆN'}</span>
             </div>
           ) : (
             <span className="text-[11px] text-ink-muted">

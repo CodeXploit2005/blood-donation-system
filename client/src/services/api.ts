@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api: any = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -46,7 +46,11 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(new Error(message));
+    const formattedError = Object.assign(new Error(message), {
+      status: error.response?.status,
+      fieldErrors: Array.isArray(error.response?.data?.error) ? error.response.data.error : [],
+    });
+    return Promise.reject(formattedError);
   }
 );
 

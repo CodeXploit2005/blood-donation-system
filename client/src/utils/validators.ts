@@ -1,4 +1,11 @@
 import { z } from 'zod';
+import { birthDateError, isVietnamPhone, normalizeVietnamPhone } from './donorEligibility';
+
+const donorBirthDate = z.string().superRefine((value, ctx) => {
+  const message = birthDateError(value);
+  if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+});
+const donorPhone = z.string().transform(normalizeVietnamPhone).refine(isVietnamPhone, 'Nhập số điện thoại Việt Nam hợp lệ, ví dụ 0912345678 hoặc +84912345678');
 
 export const loginFormSchema = z.object({
   email: z.string().min(1, 'Vui lòng nhập email').email('Email không đúng định dạng'),
@@ -6,16 +13,16 @@ export const loginFormSchema = z.object({
 });
 
 export const registerFormSchema = z.object({
-  fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
-  email: z.string().min(1, 'Vui lòng nhập email').email('Email không đúng định dạng'),
-  phone: z.string().min(9, 'Số điện thoại phải từ 9-11 số').regex(/^[0-9+]+$/, 'Số điện thoại chỉ chứa chữ số'),
-  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+  fullName: z.string().trim().min(2, 'Họ và tên phải có ít nhất 2 ký tự').max(100, 'Họ tên tối đa 100 ký tự'),
+  email: z.string().trim().toLowerCase().min(1, 'Vui lòng nhập email').email('Email không đúng định dạng'),
+  phone: donorPhone,
+  password: z.string().min(8, 'Mật khẩu phải từ 8 ký tự trở lên').refine(value => new TextEncoder().encode(value).length <= 72, 'Mật khẩu quá dài, tối đa 72 byte'),
   confirmPassword: z.string().min(1, 'Vui lòng nhập lại mật khẩu'),
   gender: z.enum(['male', 'female', 'other'], {
     errorMap: () => ({ message: 'Vui lòng chọn giới tính' }),
   }),
-  bloodType: z.string().optional(),
-  dateOfBirth: z.string().min(1, 'Vui lòng chọn ngày sinh'),
+  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown']).default('unknown'),
+  dateOfBirth: donorBirthDate,
   address: z.string().optional(),
   identityCardNumber: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -24,10 +31,10 @@ export const registerFormSchema = z.object({
 });
 
 export const donationRegistrationSchema = z.object({
-  fullName: z.string().min(2, 'Họ và tên là bắt buộc'),
-  phone: z.string().min(9, 'Số điện thoại không hợp lệ'),
-  email: z.string().email('Email không hợp lệ'),
-  dateOfBirth: z.string().min(1, 'Vui lòng chọn ngày sinh'),
+  fullName: z.string().trim().min(2, 'Họ và tên là bắt buộc').max(100, 'Họ tên tối đa 100 ký tự'),
+  phone: donorPhone,
+  email: z.string().trim().toLowerCase().email('Email không hợp lệ'),
+  dateOfBirth: donorBirthDate,
   gender: z.enum(['male', 'female', 'other'], {
     errorMap: () => ({ message: 'Vui lòng chọn giới tính' }),
   }),

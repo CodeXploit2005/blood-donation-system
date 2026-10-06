@@ -9,16 +9,16 @@ import {
   createRegistrationSchema,
 } from '../controllers/registrationController';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { adminMiddleware } from '../middleware/adminMiddleware';
+import { staffMiddleware, donorMiddleware, cancelPermission, registrationUpdatePermission } from '../middleware/adminMiddleware';
 import { validate } from '../middleware/validateMiddleware';
 
 const router = Router();
 
-router.post('/', authMiddleware, validate(createRegistrationSchema), createRegistration);
-router.get('/my', authMiddleware, getMyRegistrations);
-router.get('/event/:eventId', authMiddleware, adminMiddleware, getEventRegistrations);
+router.post('/', authMiddleware, donorMiddleware, validate(createRegistrationSchema), createRegistration);
+router.get('/my', authMiddleware, donorMiddleware, getMyRegistrations);
+router.get('/event/:eventId', authMiddleware, staffMiddleware, getEventRegistrations);
 router.get('/:id', authMiddleware, getRegistrationById);
-router.put('/:id', authMiddleware, adminMiddleware, updateRegistrationStatus);
-router.delete('/:id', authMiddleware, cancelRegistration);
+router.put('/:id', authMiddleware, staffMiddleware, registrationUpdatePermission, updateRegistrationStatus);
+router.delete('/:id', authMiddleware, cancelPermission, cancelRegistration);
 
 export default router;

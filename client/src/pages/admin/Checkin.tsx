@@ -13,6 +13,7 @@ export const Checkin = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialEventId = searchParams.get('eventId') || '';
   const [selectedEventId, setSelectedEventId] = useState(initialEventId);
+  const [redirectedEvent, setRedirectedEvent] = useState(null);
 
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
@@ -23,7 +24,8 @@ export const Checkin = () => {
     queryFn: () => eventService.getEvents({ limit: 50 }),
   });
 
-  const events = eventsData?.data || [];
+  const loadedEvents = eventsData?.data || [];
+  const events = redirectedEvent && !loadedEvents.some(event => event._id === redirectedEvent._id) ? [...loadedEvents, redirectedEvent] : loadedEvents;
   const activeEventId = selectedEventId || events[0]?._id;
 
   // Fetch real-time check-in attendees list for active event
@@ -48,7 +50,7 @@ export const Checkin = () => {
     onSuccess: (res) => {
       success(res.message || 'Điểm danh thành công!');
       queryClient.invalidateQueries({ queryKey: ['admin-checkin-feed', activeEventId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries();
     },
     onError: (err) => {
       toastError(err.message || 'Lỗi khi điểm danh');
@@ -61,7 +63,7 @@ export const Checkin = () => {
     onSuccess: () => {
       success('Đã hoàn tác điểm danh');
       queryClient.invalidateQueries({ queryKey: ['admin-checkin-feed', activeEventId] });
-      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      queryClient.invalidateQueries();
     },
     onError: (err) => {
       toastError(err.message || 'Lỗi khi hoàn tác');
@@ -140,7 +142,7 @@ export const Checkin = () => {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[11px] text-ink-muted block">Đã điểm danh & hiến máu:</span>
+            <span className="text-[11px] text-ink-muted block">Đã có mặt (gồm người đã hiến):</span>
             <span className="font-mono text-xl font-bold text-sage-deep">
               {checkinData.totalCheckedIn} người
             </span>
@@ -164,6 +166,12 @@ export const Checkin = () => {
       <QRScanner
         onCheckInSuccess={handleCheckInSubmit}
         selectedEventId={activeEventId}
+        selectedEventTitle={events.find(event => event._id === activeEventId)?.title}
+        onEventChange={(event) => {
+          setRedirectedEvent(event);
+          setSelectedEventId(event._id);
+          setSearchParams({ eventId: event._id });
+        }}
       />
 
       {/* Real-time Attendees Checked-in Feed */}

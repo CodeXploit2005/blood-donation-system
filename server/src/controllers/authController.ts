@@ -4,24 +4,36 @@ import { User } from '../models/User';
 import { generateToken } from '../utils/generateToken';
 import { successResponse, errorResponse } from '../utils/response';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { donorBirthDate, donorPhone, donorName, donorEmail } from '../utils/donorValidation';
 
 export const registerSchema = z.object({
   body: z.object({
-    fullName: z.string().min(2, 'Họ và tên phải có ít nhất 2 ký tự'),
-    email: z.string().email('Email không đúng định dạng'),
-    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-    phone: z.string().min(9, 'Số điện thoại không hợp lệ'),
-    dateOfBirth: z.string().optional(),
-    gender: z.enum(['male', 'female', 'other']).optional(),
+    fullName: donorName,
+    email: donorEmail,
+    password: z.string().min(8, 'Mật khẩu phải từ 8 ký tự trở lên').refine(value => Buffer.byteLength(value, 'utf8') <= 72, 'Mật khẩu quá dài, tối đa 72 byte'),
+    confirmPassword: z.string({ required_error: 'Vui lòng nhập lại mật khẩu' }),
+    phone: donorPhone,
+    dateOfBirth: donorBirthDate,
+    gender: z.enum(['male', 'female', 'other']),
     bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown']).optional(),
     address: z.string().optional(),
     identityCardNumber: z.string().optional(),
-  }),
+  }).refine(data => data.password === data.confirmPassword, { path: ['confirmPassword'], message: 'Mật khẩu xác nhận không khớp' }),
 });
+
+export const profileSchema = z.object({ body: z.object({
+  fullName: donorName.optional(),
+  phone: donorPhone.optional(),
+  dateOfBirth: donorBirthDate.optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown']).optional(),
+  address: z.string().trim().max(500).optional(),
+  identityCardNumber: z.string().trim().optional(),
+}) });
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().email('Email không đúng định dạng'),
+    email: donorEmail,
     password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
   }),
 });
@@ -50,7 +62,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       role: 'user',
     });
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.authVersion);
 
     const userResponse = {
       _id: user._id,
@@ -73,6 +85,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       201
     );
   } catch (error: any) {
+    if (error?.code === 11000) {
+      errorResponse(res, 'Email này đã được sử dụng bởi một tài khoản khác', 409);
+      return;
+    }
     errorResponse(res, error.message || 'Lỗi khi đăng ký tài khoản', 500, error);
   }
 };
@@ -93,7 +109,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.authVersion);
 
     const userResponse = {
       _id: user._id,

@@ -35,6 +35,11 @@ export const EventCard = ({ event, index = 0 }) => {
       onMouseLeave={() => setIsHovered(false)}
       className="group relative flex flex-col bg-porcelain-card dark:bg-ink-card rounded-3xl border border-sand dark:border-sand/20 shadow-warm hover:shadow-warm-lg transition-all duration-300 overflow-hidden"
     >
+      <Link
+        to={`/events/${_id}`}
+        aria-label={`Xem chi tiết sự kiện: ${title}`}
+        className="absolute inset-0 z-20 rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-crimson"
+      />
       {/* Image Banner with Badges */}
       <div className="relative h-48 w-full overflow-hidden bg-sand-light dark:bg-ink-deep">
         <img
@@ -49,7 +54,7 @@ export const EventCard = ({ event, index = 0 }) => {
 
         {/* Top Floating Badges (No collision, clean padding) */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
-          <span className="bg-ink/80 dark:bg-ink-deep/90 text-white backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-mono font-bold shadow-md border border-white/10">
+          <span className="bg-slate-900/90 text-white backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-mono font-bold shadow-md border border-white/20">
             Còn {remainingSpots} chỗ
           </span>
 
@@ -121,13 +126,12 @@ export const EventCard = ({ event, index = 0 }) => {
 
         {/* Action Button */}
         <div className="pt-3 border-t border-sand/60 dark:border-sand/20">
-          <Link
-            to={`/events/${_id}`}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-porcelain dark:bg-ink-deep hover:bg-crimson hover:text-white dark:hover:bg-crimson dark:hover:text-white text-ink dark:text-porcelain text-xs font-bold border border-sand dark:border-sand/20 hover:border-crimson shadow-sm transition-all duration-200"
+          <span
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-porcelain dark:bg-ink-deep group-hover:bg-crimson group-hover:text-white dark:group-hover:bg-crimson dark:group-hover:text-white text-ink dark:text-porcelain text-xs font-bold border border-sand dark:border-sand/20 group-hover:border-crimson shadow-sm transition-all duration-200"
           >
             <span>{status === 'open' ? 'Đăng ký tham gia' : 'Xem chi tiết'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          </span>
         </div>
       </div>
 

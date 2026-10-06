@@ -1,5 +1,11 @@
 # Nhịp Sống — Hệ Thống Đăng Ký & Quản Lý Hiến Máu Nhân Đạo
 
+## Chạy nhanh và phân quyền (cập nhật)
+
+Chạy `npm run dev` từ thư mục gốc để khởi động API và Vite cùng nhau; Vite chỉ mở sau khi API sẵn sàng. Nếu MongoDB đã cấu hình không truy cập được, dùng `npm run dev:local` với cơ sở dữ liệu phát triển riêng được lưu trong `server/.data/mongodb`. Nếu npm trên máy lỗi đường dẫn, dùng `node scripts/dev.cjs --local`. Dữ liệu local không đồng bộ với Atlas.
+
+Hệ thống có ba vai trò: **người hiến máu**, **nhân viên tiếp nhận/y tế**, **quản trị viên**. Admin cấp quyền trong Quản lý tài khoản; nhân viên đăng nhập vào `/staff/registrations` để xử lý đăng ký và `/staff/checkin` để quét QR. Chi tiết quyền và khởi động nằm ở [docs/ROLES.md](docs/ROLES.md). `ALLOW_MEMORY_DB` mặc định tắt; backend không tự chuyển khỏi database đã cấu hình khi lỗi kết nối.
+
 > **Ý tưởng chủ đạo: "Nhịp Sống"** — Mỗi lượt hiến máu là một nhịp tim tiếp thêm sự sống. Nền tảng số hóa toàn diện quy trình đăng ký, sàng lọc sức khỏe y tế trực tuyến, cấp thẻ QR Code kỹ thuật số, điểm danh tại hiện trường bằng camera, bảng điều khiển thống kê trực quan và xuất báo cáo y tế.
 
 ---
@@ -19,7 +25,7 @@
 ### Backend (Server)
 - **Runtime**: Node.js + Express + TypeScript (`strict: true`, build với `tsconfig.json`, chạy dev với `tsx`).
 - **Database**: MongoDB + Mongoose với Type definitions chuẩn mực (`IUser`, `IBloodDonationEvent`, `IRegistration`, generic `Model<T>`).
-- **Database Fallback**: Tự động fallback sang `mongodb-memory-server` nếu MongoDB local chưa bật, kèm sẵn dữ liệu mẫu (Seed data).
+- **Database phát triển**: `npm run dev:local` chạy MongoDB riêng với lưu trữ bền vững; chỉ dùng fallback tạm khi chủ động bật `ALLOW_MEMORY_DB=true`.
 - **Authentication**: JWT (JSON Web Tokens) + `bcryptjs` mã hóa mật khẩu.
 - **Validation**: Zod schema validation middleware.
 - **QR Service**: Ký và mã hóa payload QR an toàn bằng thuật toán băm HMAC-SHA256.
@@ -68,12 +74,12 @@ Tệp `server/.env` đã được cấu hình sẵn:
 ```env
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/blood_donation_db
-JWT_SECRET=blood_donation_super_secret_jwt_key_2026_heartbeat_life
+JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
 NODE_ENV=development
 ```
-*Lưu ý: Nếu máy tính chưa cài đặt hoặc chưa bật MongoDB daemon, Server sẽ **tự động kích hoạt In-Memory MongoDB** và nạp sẵn dữ liệu mẫu để bạn trải nghiệm ngay lập tức.*
+*Nếu MongoDB đã cấu hình không truy cập được, dùng `npm run dev:local` để chạy database phát triển riêng và nạp dữ liệu mẫu. Dữ liệu được lưu trong `server/.data/mongodb`.*
 
 ### Bước 3: Khởi động Dự án
 
