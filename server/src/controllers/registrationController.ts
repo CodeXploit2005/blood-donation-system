@@ -325,6 +325,16 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
     const { id } = req.params;
     const { donationStatus, confirmedBloodType, donationVolume, screeningResult } = req.body;
 
+    const existingRegistration = await Registration.findById(id);
+    if (!existingRegistration) {
+      errorResponse(res, 'Không tìm thấy đơn đăng ký', 404);
+      return;
+    }
+    if (existingRegistration.donationStatus === 'cancelled') {
+      errorResponse(res, 'Không thể cập nhật kết quả hiến máu cho đơn đã hủy', 422);
+      return;
+    }
+
     if (donationStatus === 'donated' && (!Number.isFinite(donationVolume) || donationVolume < 200 || donationVolume > 500 || !confirmedBloodType || confirmedBloodType === 'unknown')) {
       errorResponse(res, 'Ghi nhận hiến máu cần thể tích thực tế 200–500 ml và nhóm máu đã xác nhận', 422); return;
     }
@@ -335,6 +345,14 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
         ...(confirmedBloodType !== undefined && { confirmedBloodType }),
         ...(donationVolume !== undefined && { donationVolume }),
         ...(screeningResult && { screeningResult }),
+        ...(donationStatus === 'donated' && {
+          'checkIn.status': 'checked_in',
+          ...(!existingRegistration.checkIn?.checkInTime && {
+            'checkIn.checkInTime': new Date(),
+            'checkIn.checkedInBy': req.user!._id,
+          }),
+          ...(!screeningResult && { 'screeningResult.doctorConclusion': 'eligible' }),
+        }),
       },
       { new: true, runValidators: true }
     ).populate('eventId', 'title');

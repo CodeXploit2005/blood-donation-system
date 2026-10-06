@@ -29,6 +29,8 @@ import {
 } from '../../utils/constants';
 import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
+import useAuth from '../../hooks/useAuth';
+import { BLOOD_TYPES } from '../../utils/constants';
 
 export const RegistrationsManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,9 +42,25 @@ export const RegistrationsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedReg, setSelectedReg] = useState(null);
+  const [volumeMl, setVolumeMl] = useState('');
+  const [confirmedBloodType, setConfirmedBloodType] = useState('');
+  const { user } = useAuth();
 
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
+  const recordDonation = useMutation({
+    mutationFn: () => registrationService.updateRegistrationStatus(selectedReg._id, {
+      donationStatus: 'donated',
+      donationVolume: Number(volumeMl),
+      confirmedBloodType,
+    }),
+    onSuccess: (response) => {
+      setSelectedReg(response.data);
+      queryClient.invalidateQueries();
+      success('Đã ghi nhận lượng máu hiến thành công.');
+    },
+    onError: (err: Error) => toastError(err.message || 'Không thể ghi nhận hiến máu'),
+  });
 
   // Fetch events list for dropdown
   const { data: eventsData } = useQuery({
@@ -249,7 +267,11 @@ export const RegistrationsManagement = () => {
 
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => setSelectedReg(reg)}
+                        onClick={() => {
+                          setSelectedReg(reg);
+                          setVolumeMl(reg.donationVolume ? String(reg.donationVolume) : '');
+                          setConfirmedBloodType(reg.confirmedBloodType || (reg.bloodType !== 'unknown' ? reg.bloodType : ''));
+                        }}
                         className="p-1.5 rounded-lg border border-sand hover:border-crimson hover:bg-crimson-light text-ink-muted hover:text-crimson transition-colors"
                         title="Xem phiếu sàng lọc chi tiết"
                       >
@@ -367,6 +389,35 @@ export const RegistrationsManagement = () => {
                 </div>
               )}
             </div>
+
+            {user?.role === 'staff' && selectedReg.donationStatus !== 'cancelled' && (
+              <form className="p-4 rounded-2xl border border-sand bg-porcelain space-y-3" onSubmit={(e) => {
+                e.preventDefault();
+                if (!volumeMl || !Number.isFinite(Number(volumeMl)) || Number(volumeMl) < 200 || Number(volumeMl) > 500 || !confirmedBloodType) {
+                  toastError('Vui lòng nhập thể tích thực tế từ 200 đến 500 ml và nhóm máu đã xác nhận.');
+                  return;
+                }
+                recordDonation.mutate();
+              }}>
+                <h4 className="font-bold text-ink text-xs uppercase tracking-wider">Ghi nhận hiến máu</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="space-y-1 block">
+                    <span className="font-semibold">Lượng máu thực tế đã hiến (ml)</span>
+                    <input type="number" required min="200" max="500" step="1" list="donation-volumes" value={volumeMl} onChange={(e) => setVolumeMl(e.target.value)} placeholder="Nhập số ml" className="w-full px-3 py-2 rounded-xl border border-sand bg-white text-ink" />
+                    <datalist id="donation-volumes"><option value="250" /><option value="350" /><option value="450" /></datalist>
+                  </label>
+                  <label className="space-y-1 block">
+                    <span className="font-semibold">Nhóm máu đã xác nhận</span>
+                    <select required value={confirmedBloodType} onChange={(e) => setConfirmedBloodType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-sand bg-white text-ink">
+                      <option value="">Chọn nhóm máu</option>
+                      {BLOOD_TYPES.filter((type) => type !== 'unknown').map((type) => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="text-ink-muted">Chỉ xác nhận sau khi người hiến đã hoàn tất hiến máu và có kết quả thực tế.</p>
+                <Button type="submit" isLoading={recordDonation.isPending}>{selectedReg.donationStatus === 'donated' ? 'Cập nhật lượng máu đã hiến' : 'Xác nhận đã hiến máu'}</Button>
+              </form>
+            )}
 
             {/* Check-in info if completed */}
             {selectedReg.checkIn?.status === 'checked_in' && (

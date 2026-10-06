@@ -485,7 +485,7 @@ export const Dashboard = () => {
                   <td className="px-4 py-3 text-center">
                     {reg.donationStatus === 'donated' ? (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage">
-                        Đã hiến ({reg.donationVolume || 350}ml)
+                        {reg.donationVolume ? `Đã hiến (${reg.donationVolume} ml)` : 'Đã hiến · chưa ghi thể tích'}
                       </span>
                     ) : reg.checkIn?.status === 'checked_in' ? (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-700">
