@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const api: any = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
+  // Allow a sleeping backend to start, but never leave requests pending forever.
+  timeout: 90_000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -25,7 +27,11 @@ api.interceptors.response.use(
   (error) => {
     let message = 'Có lỗi xảy ra, vui lòng thử lại.';
 
-    if (error.response?.data?.message) {
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      message = 'Máy chủ phản hồi quá lâu. Vui lòng thử lại sau ít phút.';
+    } else if (error.code === 'ERR_NETWORK') {
+      message = 'Không kết nối được máy chủ. Vui lòng kiểm tra mạng và thử lại sau ít phút.';
+    } else if (error.response?.data?.message) {
       message = error.response.data.message;
     } else if (Array.isArray(error.response?.data?.error)) {
       message = error.response.data.error.map((e) => e.message || e).join('; ');

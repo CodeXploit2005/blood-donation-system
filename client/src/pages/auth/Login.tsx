@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,17 @@ export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWaitingForServer, setIsWaitingForServer] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setIsWaitingForServer(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setIsWaitingForServer(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [isSubmitting]);
 
   const from = location.state?.from?.pathname || '/';
 
@@ -132,6 +142,11 @@ export const Login = () => {
         >
           Đăng Nhập
         </Button>
+        {isSubmitting && isWaitingForServer && (
+          <p role="status" className="text-xs text-ink-muted text-center">
+            Máy chủ đang phản hồi chậm hoặc khởi động lại. Vui lòng chờ, quá trình này có thể mất khoảng một phút.
+          </p>
+        )}
       </form>
 
       {/* Switch to Register */}
