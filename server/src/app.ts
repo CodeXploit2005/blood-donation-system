@@ -24,6 +24,16 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Public API landing endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: 'API Nhịp Sống đang hoạt động. Truy cập giao diện ứng dụng tại link Vercel.',
+    service: 'Blood Donation System API',
+    health: '/api/health',
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
