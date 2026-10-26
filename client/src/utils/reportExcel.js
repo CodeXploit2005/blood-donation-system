@@ -47,7 +47,13 @@ export async function buildReportWorkbook(report) {
   }
   detail.autoFilter = { from: 'A1', to: 'O1' };
   detail.getColumn(3).numFmt = '@';
-  for (const sheet of [summary, detail]) {
+  const groups = workbook.addWorksheet('Theo nhóm máu');
+  groups.columns = [{ header: 'Nhóm máu xác nhận', width: 26 }, { header: 'Số người đã hiến', width: 24 }, { header: 'Thể tích (ml)', width: 24 }];
+  for (const group of report.bloodTypeStats || []) groups.addRow([group._id, group.count, group.volumeMl || 0]);
+  const history = workbook.addWorksheet('Lịch sử sửa kết quả');
+  history.columns = ['Mã đăng ký', 'Người hiến', 'Thời điểm', 'Người cập nhật', 'Vai trò', 'ml trước', 'ml sau', 'Nhóm trước', 'Nhóm sau', 'Lý do'].map(header => ({ header, width: 26 }));
+  for (const r of report.registrations || []) for (const entry of r.resultHistory || []) history.addRow([r.qrCode?.code, r.fullName, dateText(entry.at), entry.actorName || String(entry.actorId || ''), entry.actorRole, entry.before?.donationVolume ?? null, entry.after?.donationVolume ?? null, entry.before?.confirmedBloodType || '', entry.after?.confirmedBloodType || '', entry.reason]);
+  for (const sheet of [summary, detail, groups, history]) {
     sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
     sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC4384A' } };
     sheet.getRow(1).height = 30;

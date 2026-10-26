@@ -37,7 +37,7 @@ export const authMiddleware = async (
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const currentUser = await User.findById(decoded.id).select('-password');
-    if (!currentUser) {
+    if (!currentUser || currentUser.isActive === false) {
       errorResponse(res, 'Tài khoản người dùng không tồn tại hoặc đã bị khóa', 401);
       return;
     }

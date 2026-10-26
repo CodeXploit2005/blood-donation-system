@@ -8,15 +8,18 @@ import EmptyState from '../../components/common/EmptyState';
 import Loading, { CardSkeleton } from '../../components/common/Loading';
 import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
+import useAuth from '../../hooks/useAuth';
 
 export const MyRegistrations = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
 
   const { data, isLoading } = useQuery({
     refetchInterval: 15000,
-    queryKey: ['my-registrations'],
-    queryFn: () => registrationService.getMyRegistrations(),
+    queryKey: ['my-registrations', user?._id],
+    enabled: !!user?._id,
+    queryFn: ({ signal }) => registrationService.getMyRegistrations(signal),
   });
 
   const cancelMutation = useMutation({
@@ -31,6 +34,9 @@ export const MyRegistrations = () => {
   });
 
   const registrations = data?.data || [];
+  const donations = registrations.filter(reg => reg.donationStatus === 'donated');
+  const totalVolume = donations.reduce((total, reg) => total + (reg.donationVolume > 0 ? reg.donationVolume : 0), 0);
+  const missingVolume = donations.filter(reg => !(reg.donationVolume > 0)).length;
 
   const handleCancelRegistration = (reg) => {
     if (window.confirm(`Bạn có chắc chắn muốn hủy đơn đăng ký cho đợt "${reg.eventId?.title}"?`)) {
@@ -62,6 +68,12 @@ export const MyRegistrations = () => {
           </Button>
         </Link>
       </div>
+
+      {!isLoading && registrations.length > 0 && <div className="rounded-2xl border border-sand bg-porcelain-card p-5">
+        <p className="font-bold text-ink">Kết quả hiến máu của tôi</p>
+        <p className="mt-2 text-xl font-bold text-crimson">{donations.length} lần đã hiến · {totalVolume.toLocaleString('vi-VN')} ml đã ghi nhận</p>
+        {!!missingVolume && <p className="mt-1 text-xs text-ink-muted">{missingVolume} lần hiến chưa được nhập số ml, chưa tính vào tổng lượng máu.</p>}
+      </div>}
 
       {/* Registrations List */}
       {isLoading ? (

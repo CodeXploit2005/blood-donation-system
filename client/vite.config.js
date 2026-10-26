@@ -5,6 +5,10 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  // Prebundle the lazy Excel exporter before the first report download.
+  optimizeDeps: {
+    include: ['exceljs'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -12,7 +16,7 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: Number(process.env.CLIENT_PORT || 5173),
-    strictPort: true,
+    strictPort: false,
     proxy: {
       '/api': {
         target: process.env.API_PROXY_TARGET || loadEnv(mode, process.cwd(), '').API_PROXY_TARGET || 'http://127.0.0.1:5000',

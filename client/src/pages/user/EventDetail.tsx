@@ -29,6 +29,7 @@ export const EventDetail = () => {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['event-detail', id],
     queryFn: () => eventService.getEventById(id),
   });

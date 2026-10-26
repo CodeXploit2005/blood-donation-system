@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +41,7 @@ export const AuthProvider = ({ children }) => {
   }, [checkAuth]);
 
   const login = async (credentials) => {
+    queryClient.clear();
     setIsLoading(true);
     try {
       const response = await authService.login(credentials);
@@ -55,6 +58,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    queryClient.clear();
     setIsLoading(true);
     try {
       const response = await authService.register(userData);
@@ -71,6 +75,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    queryClient.clear();
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);

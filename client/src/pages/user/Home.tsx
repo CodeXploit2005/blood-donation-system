@@ -24,6 +24,7 @@ export const Home = () => {
 
   // Fetch open events
   const { data: eventsData, isLoading, isError, refetch } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['home-events'],
     queryFn: () => eventService.getEvents({ status: 'open', limit: 3 }),
   });

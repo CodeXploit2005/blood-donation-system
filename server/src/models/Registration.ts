@@ -44,6 +44,7 @@ export type DonationStatusType =
   | 'cancelled';
 
 export interface IRegistration extends Document {
+  resultHistory: { at: Date; actorId: Types.ObjectId; actorName: string; actorRole: string; reason: string; before: Record<string, unknown>; after: Record<string, unknown> }[];
   userId: Types.ObjectId;
   eventId: Types.ObjectId;
   fullName: string;
@@ -147,6 +148,7 @@ const RegistrationSchema = new Schema<IRegistration>(
       notes: { type: String, default: '' },
       reasons: { type: [String], default: [] },
     },
+    resultHistory: { type: [new Schema({ at: Date, actorId: { type: Schema.Types.ObjectId, ref: 'User' }, actorName: String, actorRole: String, reason: String, before: Schema.Types.Mixed, after: Schema.Types.Mixed }, { _id: false })], default: [] },
     donationVolume: {
       type: Number,
       default: null,

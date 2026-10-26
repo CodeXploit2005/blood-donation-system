@@ -13,12 +13,16 @@ for (const role of ['user', 'admin', 'staff']) {
   assert.equal(check(staffMiddleware, role).allowed, role !== 'user');
   assert.equal(check(registrationUpdatePermission, role, { screeningResult: { doctorConclusion: 'eligible' } }).allowed, role === 'staff');
   assert.equal(check(registrationUpdatePermission, role, { donationStatus: 'cancelled' }).allowed, role === 'admin');
-  assert.equal(check(registrationUpdatePermission, role, { donationStatus: 'donated', donationVolume: 350, confirmedBloodType: 'O+' }).allowed, role === 'staff');
+  assert.equal(check(registrationUpdatePermission, role, { donationStatus: 'donated', donationVolume: 350, confirmedBloodType: 'O+' }).allowed, role !== 'user');
 }
-assert.equal(check(checkinPermission, 'admin', { action: 'presence' }).allowed, true);
-assert.equal(check(checkinPermission, 'admin', { preview: true }).allowed, true);
+assert.equal(check(checkinPermission, 'admin', { action: 'presence' }).status, 403);
+assert.equal(check(checkinPermission, 'admin', { preview: true }).status, 403);
+assert.equal(check(checkinPermission, 'staff', { action: 'presence' }).allowed, true);
+assert.equal(check(checkinPermission, 'user', { preview: true }).status, 403);
 assert.equal(check(checkinPermission, 'admin', { action: 'presence', nurseNotes: 'clinical' }).status, 403);
 assert.equal(check(checkinPermission, 'admin', { confirmedBloodType: 'O+' }).status, 403);
 assert.equal(check(registrationUpdatePermission, 'staff', { donationStatus: 'cancelled', screeningResult: {} }).status, 403);
 assert.equal(check(registrationUpdatePermission, 'admin', { donationStatus: 'cancelled', screeningResult: {} }).status, 403);
-console.log('PASS: donor-only registration, admin/donor cancellation, staff-only clinical results, admin presence/preview, blocked mixed payloads.');
+assert.equal(check(registrationUpdatePermission, 'admin', { donationStatus: 'donated', donationVolume: 350, confirmedBloodType: 'O+', screeningResult: {} }).status, 403);
+assert.equal(check(registrationUpdatePermission, 'admin', { donationVolume: 350 }).status, 403);
+console.log('PASS: admin/staff donation recording, donor read-only results, staff-only screening, cancellation and blocked mixed payloads.');

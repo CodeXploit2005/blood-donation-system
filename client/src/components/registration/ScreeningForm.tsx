@@ -21,6 +21,8 @@ import {
 import { donationRegistrationSchema } from '../../utils/validators';
 import { BLOOD_TYPES, TIME_SLOTS } from '../../utils/constants';
 import Button from '../common/Button';
+import { QRCodeSVG } from 'qrcode.react';
+import QRCodeFrame from '../checkin/QRCodeFrame';
 import { birthDateBounds } from '../../utils/donorEligibility';
 
 export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) => {
@@ -167,19 +169,26 @@ export const ScreeningForm = ({ event, user, onSubmit, isSubmitting = false }) =
           initial={{ opacity: 0, scale: 0.9, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.4, type: 'spring', damping: 22 }}
-          className="glass-qr rounded-3xl p-6 mb-6 shadow-pulse-glow max-w-sm mx-auto animate-breathing"
+          className="glass-qr rounded-3xl p-5 sm:p-6 mb-6 shadow-warm max-w-sm mx-auto"
         >
-          <div className="w-48 h-48 mx-auto bg-white p-3 rounded-2xl border border-sand shadow-inner flex items-center justify-center">
-            {reg.qrCode?.dataUrl ? (
-              <img
-                src={reg.qrCode.dataUrl}
-                alt="QR Code"
-                className="w-full h-full object-contain"
+          <QRCodeFrame>
+            {reg.qrCode?.code ? (
+              <QRCodeSVG
+                value={reg.qrCode.token ? `${reg.qrCode.code}:${reg.qrCode.token.substring(0, 16)}` : reg.qrCode.code}
+                size={256}
+                level="M"
+                minVersion={5}
+                boostLevel={false}
+                includeMargin={true}
+                fgColor="#000000"
+                bgColor="#FFFFFF"
+                title="Mã QR điểm danh hiến máu"
+                className="block w-full h-auto"
               />
             ) : (
               <QrCode className="w-32 h-32 text-ink" />
             )}
-          </div>
+          </QRCodeFrame>
 
           <div className="mt-4 space-y-1">
             <p className="font-mono text-base font-bold text-crimson tracking-wider">

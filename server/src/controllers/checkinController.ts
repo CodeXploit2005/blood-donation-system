@@ -12,7 +12,7 @@ export const checkInSchema = z.object({
     eventId: z.string().optional(),
     preview: z.boolean().optional(),
     action: z.enum(['presence']).optional(),
-    actualVolumeMl: z.number().min(200, 'Thể tích tối thiểu 200ml').max(500, 'Thể tích tối đa 500ml').default(350),
+    actualVolumeMl: z.number().int().min(200, 'Thể tích tối thiểu 200ml').max(500, 'Thể tích tối đa 500ml').optional(),
     confirmedBloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown']).optional(),
     nurseNotes: z.string().optional(),
     bloodPressure: z.string().optional(),
@@ -150,10 +150,11 @@ export const verifyAndCheckIn = async (req: AuthRequest, res: Response): Promise
         ? registration.bloodType
         : confirmedBloodType;
 
+    const previousResult = { donationStatus: registration.donationStatus, donationVolume: registration.donationVolume, confirmedBloodType: registration.confirmedBloodType };
     // Perform check-in and mark as donated
     registration.checkIn = {
       status: 'checked_in',
-      checkInTime: new Date(),
+      checkInTime: registration.checkIn?.checkInTime || new Date(),
       checkedInBy: req.user._id,
       nurseNotes: nurseNotes || '',
       bloodPressure: bloodPressure || undefined,
@@ -161,7 +162,7 @@ export const verifyAndCheckIn = async (req: AuthRequest, res: Response): Promise
     };
 
     registration.donationStatus = 'donated';
-    registration.donationVolume = actualVolumeMl || 350;
+    registration.donationVolume = actualVolumeMl;
     registration.confirmedBloodType = resolvedBloodType as any;
 
     if (!registration.screeningResult) {
@@ -173,7 +174,14 @@ export const verifyAndCheckIn = async (req: AuthRequest, res: Response): Promise
       registration.screeningResult.doctorConclusion = 'eligible';
     }
 
-    await registration.save();
+    const recorded = await Registration.findOneAndUpdate(
+      { _id: registration._id, __v: registration.__v, donationStatus: { $nin: ['donated', 'cancelled', 'screened_ineligible', 'no_show'] } },
+      { $set: { checkIn: registration.checkIn, donationStatus: 'donated', donationVolume: actualVolumeMl, confirmedBloodType: resolvedBloodType, screeningResult: registration.screeningResult },
+        $inc: { __v: 1 },
+        $push: { resultHistory: { at: new Date(), actorId: req.user._id, actorName: req.user.fullName, actorRole: req.user.role, reason: 'Ghi nhận kết quả qua QR', before: previousResult, after: { donationStatus: 'donated', donationVolume: actualVolumeMl, confirmedBloodType: resolvedBloodType } } } },
+      { new: true, runValidators: true }
+    );
+    if (!recorded) { errorResponse(res, 'Đơn đã được xử lý ở nơi khác. Vui lòng tải lại.', 409); return; }
 
     // Increment collected blood units in event
     await BloodDonationEvent.findByIdAndUpdate(registration.eventId._id, {
@@ -251,6 +259,7 @@ export const undoCheckIn = async (req: AuthRequest, res: Response): Promise<void
       errorResponse(res, 'Chỉ nhân viên y tế được điều chỉnh lượt đã hiến máu', 403);
       return;
     }
+    const previousUndoResult = { donationStatus: registration.donationStatus, donationVolume: registration.donationVolume, confirmedBloodType: registration.confirmedBloodType };
     registration.checkIn = {
       status: 'pending',
       checkInTime: undefined,
@@ -259,13 +268,18 @@ export const undoCheckIn = async (req: AuthRequest, res: Response): Promise<void
     };
     registration.donationStatus = 'registered';
     registration.donationVolume = null;
-    await registration.save();
+    registration.confirmedBloodType = null;
+    const undone = await Registration.findOneAndUpdate(
+      { _id: registration._id, __v: registration.__v, donationStatus: previousUndoResult.donationStatus },
+      { $set: { checkIn: registration.checkIn, donationStatus: 'registered', donationVolume: null, confirmedBloodType: null }, $inc: { __v: 1 },
+        $push: { resultHistory: { at: new Date(), actorId: req.user!._id, actorName: req.user!.fullName, actorRole: req.user!.role, reason: 'Hoàn tác tiếp nhận', before: previousUndoResult, after: { donationStatus: 'registered', donationVolume: null, confirmedBloodType: null } } } }, { new: true });
+    if (!undone) { errorResponse(res, 'Đơn vừa được cập nhật ở nơi khác. Vui lòng tải lại.', 409); return; }
 
     if (wasDonated) await BloodDonationEvent.findByIdAndUpdate(registration.eventId, {
       $inc: { collectedBloodUnits: -1 },
     });
 
-    successResponse(res, registration, 'Đã hoàn tác điểm danh thành công');
+    successResponse(res, undone, 'Đã hoàn tác điểm danh thành công');
   } catch (error: any) {
     errorResponse(res, error.message || 'Lỗi khi hoàn tác điểm danh', 500, error);
   }

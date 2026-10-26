@@ -2,6 +2,7 @@ import mongoose, { Document, Schema, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
+  isActive: boolean;
   fullName: string;
   email: string;
   password?: string;
@@ -48,6 +49,7 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'Số điện thoại là bắt buộc'],
       trim: true,
     },
+    isActive: { type: Boolean, default: true },
     authVersion: { type: Number, default: 0, select: true },
     passwordResetOtpHash: { type: String, select: false },
     passwordResetOtpAttempts: { type: Number, select: false },

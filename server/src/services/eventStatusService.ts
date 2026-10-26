@@ -12,11 +12,13 @@ export const resolveEventStatus = (
   startDate: Date,
   endDate: Date,
   requestedStatus: EventStatus,
-  now = new Date()
+  now = new Date(),
+  statusMode: IBloodDonationEvent['statusMode'] = 'auto'
 ): EventStatus => {
   if (MANUAL_STATUSES.includes(requestedStatus)) return requestedStatus;
+  if (now >= endDate) return 'closed';
+  if (statusMode === 'manual') return requestedStatus;
   if (now < startDate) return 'upcoming';
-  if (now > endDate) return 'closed';
   return 'open';
 };
 
@@ -43,9 +45,8 @@ export const syncAutomaticEventStatuses = async (now = new Date()): Promise<void
     {
       updateMany: {
         filter: {
-          statusMode: { $ne: 'manual' },
           status: { $in: ['open', 'upcoming'] },
-          endDate: { $lt: now },
+          endDate: { $lte: now },
         },
         update: { $set: { status: 'closed' } },
       },

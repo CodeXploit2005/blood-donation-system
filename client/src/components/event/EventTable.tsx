@@ -27,6 +27,7 @@ export const EventTable = ({ events = [], onEdit, onDelete, isLoading = false })
               <th className="px-4 py-4 font-bold">Thời Gian</th>
               <th className="px-4 py-4 font-bold">Địa Điểm</th>
               <th className="px-4 py-4 font-bold text-center">Đã Đăng Ký</th>
+              <th className="px-4 py-4 font-bold text-center">Máu Đã Hiến</th>
               <th className="px-4 py-4 font-bold text-center">Trạng Thái</th>
               <th className="px-5 py-4 font-bold text-right">Thao Tác</th>
             </tr>
@@ -76,6 +77,11 @@ export const EventTable = ({ events = [], onEdit, onDelete, isLoading = false })
                 </td>
 
                 {/* Status Badge */}
+                <td className="px-4 py-4 text-center text-ink whitespace-nowrap">
+                  <div className="font-bold text-crimson">{(event.donationSummary?.volumeMl || 0).toLocaleString('vi-VN')} ml</div>
+                  <div className="text-[11px] text-ink-muted">{event.donationSummary?.donors || 0} người đã hiến</div>
+                  {!!event.donationSummary?.missingVolume && <div className="text-[11px] text-amber-700">{event.donationSummary.missingVolume} chưa ghi ml</div>}
+                </td>
                 <td className="px-4 py-4 text-center whitespace-nowrap">
                   <span
                     className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -95,14 +101,6 @@ export const EventTable = ({ events = [], onEdit, onDelete, isLoading = false })
                       className="p-1.5 rounded-lg border border-sand hover:border-crimson hover:bg-crimson-light text-ink-muted hover:text-crimson transition-colors"
                     >
                       <Users className="w-4 h-4" />
-                    </Link>
-
-                    <Link
-                      to={`/admin/checkin?eventId=${event._id}`}
-                      title="Quét mã QR điểm danh tại chỗ"
-                      className="p-1.5 rounded-lg border border-sand hover:border-crimson hover:bg-crimson text-ink-muted hover:text-white transition-all shadow-sm"
-                    >
-                      <ScanLine className="w-4 h-4" />
                     </Link>
 
                     <button

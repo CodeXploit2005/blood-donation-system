@@ -107,13 +107,13 @@ export const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link to="/admin/checkin">
+          <Link to="/admin/registrations">
             <Button
               variant="primary"
               size="sm"
               leftIcon={<ScanLine className="w-4 h-4" />}
             >
-              Mở Quét QR Điểm Danh
+              Quản lý kết quả hiến máu
             </Button>
           </Link>
           <Link to="/admin/events">

@@ -5,8 +5,8 @@ export const registrationService = {
     return api.post('/registrations', data);
   },
 
-  getMyRegistrations: async () => {
-    return api.get('/registrations/my');
+  getMyRegistrations: async (signal?: AbortSignal) => {
+    return api.get('/registrations/my', { signal });
   },
 
   getRegistrationById: async (id) => {

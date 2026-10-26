@@ -41,7 +41,7 @@ export const getEventReport = async (req: Request, res: Response): Promise<void>
             confirmedBloodType: { $ne: null, $nin: ['', 'unknown'] },
           },
         },
-        { $group: { _id: '$confirmedBloodType', count: { $sum: 1 } } },
+        { $group: { _id: '$confirmedBloodType', count: { $sum: 1 }, volumeMl: { $sum: { $ifNull: ['$donationVolume', 0] } } } },
       ]),
       Registration.aggregate([
         { $match: { eventId: event._id, donationStatus: 'donated', donationVolume: { $gt: 0 } } },
@@ -62,6 +62,9 @@ export const getEventReport = async (req: Request, res: Response): Promise<void>
         checkInRate: funnel.attendanceRate,
         conversionRate: funnel.conversionRate,
         totalVolumeMl,
+        generatedAt: new Date(),
+        missingVolumeCount: registrations.filter(r => r.donationStatus === 'donated' && !(Number(r.donationVolume) > 0)).length,
+        missingBloodTypeCount: registrations.filter(r => r.donationStatus === 'donated' && !r.confirmedBloodType).length,
         bloodTypeStats,
         registrations,
       },

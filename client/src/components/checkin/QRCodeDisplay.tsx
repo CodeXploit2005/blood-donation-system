@@ -4,6 +4,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Download, Share2, ShieldCheck, Heart, Calendar, Clock, MapPin, Sparkles } from 'lucide-react';
 import { formatDate, formatTime } from '../../utils/formatDate';
 import Button from '../common/Button';
+import QRCodeFrame from './QRCodeFrame';
+import DonationResult from '../registration/DonationResult';
 
 export const QRCodeDisplay = ({ registration, user }) => {
   const cardRef = useRef(null);
@@ -92,7 +94,7 @@ export const QRCodeDisplay = ({ registration, user }) => {
 
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-crimson-light dark:bg-crimson/20 text-crimson text-[11px] font-bold border border-crimson/20">
             <Sparkles className="w-3 h-3" />
-            <span>{bloodType !== 'unknown' ? `Nhóm ${bloodType}` : 'Người hiến'}</span>
+            <span>{registration.confirmedBloodType ? `Nhóm ${registration.confirmedBloodType}` : bloodType !== 'unknown' ? `Tự khai: ${bloodType}` : 'Người hiến'}</span>
           </div>
         </div>
 
@@ -109,23 +111,19 @@ export const QRCodeDisplay = ({ registration, user }) => {
 
         {/* QR Code Canvas */}
         <div className="my-5 flex flex-col items-center justify-center">
-          <div className="p-4 bg-white rounded-3xl border-2 border-sand shadow-inner relative group">
-            {/* Corner brackets */}
-            <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-crimson" />
-            <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-crimson" />
-            <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-crimson" />
-            <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-crimson" />
-
+          <QRCodeFrame>
             <QRCodeSVG
               id="donation-qr-svg"
               value={qrString}
               size={256}
               level="M"
+              minVersion={5}
+              boostLevel={false}
               includeMargin={true}
-              className="max-w-full h-auto"
+              className="block w-full h-auto"
               fgColor="#000000"
             />
-          </div>
+          </QRCodeFrame>
 
           {/* Unique alphanumeric code */}
           <div className="mt-3 text-center">
@@ -172,6 +170,8 @@ export const QRCodeDisplay = ({ registration, user }) => {
           )}
         </div>
       </motion.div>
+
+      <div className="w-full mt-4"><DonationResult registration={registration} /></div>
 
       {/* Action buttons below card */}
       <div className="w-full mt-6 flex gap-3 justify-center">

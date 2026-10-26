@@ -29,6 +29,7 @@ export const generateRegistrationQR = async (
 
   // Generate Base64 Data URL with crimson color palette
   const dataUrl = await QRCode.toDataURL(qrPayload, {
+    version: 5,
     errorCorrectionLevel: 'M',
     margin: 4,
     width: 480,

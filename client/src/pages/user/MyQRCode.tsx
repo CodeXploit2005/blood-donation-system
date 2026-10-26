@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QrCode, Calendar, ShieldCheck, ChevronDown } from 'lucide-react';
 import registrationService from '../../services/registrationService';
@@ -10,12 +11,14 @@ import { formatDate } from '../../utils/formatDate';
 
 export const MyQRCode = () => {
   const { user } = useAuth();
-  const [selectedRegId, setSelectedRegId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const [selectedRegId, setSelectedRegId] = useState(searchParams.get('registrationId'));
 
   const { data, isLoading, error } = useQuery({
     refetchInterval: 15000,
-    queryKey: ['my-registrations-for-qr'],
-    queryFn: () => registrationService.getMyRegistrations(),
+    queryKey: ['my-registrations-for-qr', user?._id],
+    enabled: !!user?._id,
+    queryFn: ({ signal }) => registrationService.getMyRegistrations(signal),
   });
 
   const rawList = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];

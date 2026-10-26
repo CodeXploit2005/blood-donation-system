@@ -10,7 +10,7 @@ export const updateUserRoleSchema = z.object({
   }),
 });
 
-const publicUserFields = 'fullName email phone role bloodType createdAt';
+const publicUserFields = 'fullName email phone role bloodType createdAt isActive';
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -36,13 +36,16 @@ export const updateUserRole = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    if (targetUser.isActive === false) {
+      errorResponse(res, 'Tài khoản đã ngừng hoạt động, không thể cấp quyền', 400); return;
+    }
     if (String(targetUser._id) === String(req.user?._id) && role !== 'admin') {
       errorResponse(res, 'Bạn không thể tự gỡ quyền quản trị của mình', 400);
       return;
     }
 
     if (targetUser.role === 'admin' && role !== 'admin') {
-      const adminCount = await User.countDocuments({ role: 'admin' });
+      const adminCount = await User.countDocuments({ role: 'admin', isActive: { $ne: false } });
       if (adminCount <= 1) {
         errorResponse(res, 'Hệ thống cần duy trì ít nhất một tài khoản quản trị', 400);
         return;
@@ -74,15 +77,15 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     if (targetUser.role === 'admin') {
-      const adminCount = await User.countDocuments({ role: 'admin' });
+      const adminCount = await User.countDocuments({ role: 'admin', isActive: { $ne: false } });
       if (adminCount <= 1) {
         errorResponse(res, 'Hệ thống cần duy trì ít nhất một tài khoản quản trị', 400);
         return;
       }
     }
 
-    await User.findByIdAndDelete(id);
-    successResponse(res, null, `Đã xóa tài khoản ${targetUser.email}`);
+    await User.updateOne({ _id: id }, { $set: { isActive: false }, $inc: { authVersion: 1 } });
+    successResponse(res, null, `Đã ngừng hoạt động tài khoản ${targetUser.email}. Lịch sử hiến máu được giữ nguyên.`);
   } catch (error: any) {
     errorResponse(res, error.message || 'Không thể xóa tài khoản', 500, error);
   }

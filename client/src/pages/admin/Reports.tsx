@@ -19,7 +19,7 @@ import reportService from '../../services/reportService';
 import eventService from '../../services/eventService';
 import Loading from '../../components/common/Loading';
 import Button from '../../components/common/Button';
-import { formatDate, formatNumber } from '../../utils/formatDate';
+import { formatDate, formatNumber, formatDateTime } from '../../utils/formatDate';
 
 const RARE_TYPES = ['AB-', 'O-', 'B-', 'A-'];
 
@@ -109,6 +109,8 @@ export const Reports = () => {
         <div className="p-8 text-center text-xs text-ink-muted">Chưa có dữ liệu báo cáo.</div>
       ) : (
         <div className="space-y-6">
+          <p className="text-xs text-ink-muted">Cập nhật: {formatDateTime(report.generatedAt)} · Tự làm mới mỗi 15 giây. Chỉ tính lượng máu đã ghi nhận thực tế.</p>
+          {(report.missingVolumeCount > 0 || report.missingBloodTypeCount > 0) && <div className="rounded-2xl border border-amber-500 bg-porcelain-card p-4 text-xs text-ink">Dữ liệu cần bổ sung: {report.missingVolumeCount || 0} lượt đã hiến thiếu số ml; {report.missingBloodTypeCount || 0} lượt chưa xác nhận nhóm máu.</div>}
           {/* Summary KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-5 rounded-3xl bg-porcelain-card dark:bg-ink-card border border-sand dark:border-sand/20 shadow-warm space-y-1">
@@ -188,6 +190,7 @@ export const Reports = () => {
               Phân Bố Nhóm Máu Đã Tiếp Nhận Trong Sự Kiện
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {!report.bloodTypeStats?.length && <p className="col-span-full py-4 text-center text-xs text-ink-muted">Chưa có kết quả hiến máu đã xác nhận trong đợt này.</p>}
               {report.bloodTypeStats?.map((b) => {
                 const isRare = RARE_TYPES.includes(b._id) && b.count < 2;
                 return (
@@ -205,6 +208,7 @@ export const Reports = () => {
                     </div>
                     <span className="font-mono text-xl font-bold text-ink dark:text-porcelain">{b.count}</span>
                     <span className="text-[10px] text-ink-muted block">ca hiến thành công</span>
+                    <span className="block text-sm font-bold text-crimson">{formatNumber(b.volumeMl)} ml</span>
                   </div>
                 );
               })}

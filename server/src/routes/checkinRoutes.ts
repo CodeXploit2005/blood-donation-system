@@ -13,6 +13,6 @@ const router = Router();
 
 router.post('/', authMiddleware, staffMiddleware, checkinPermission, validate(checkInSchema), verifyAndCheckIn);
 router.get('/event/:eventId', authMiddleware, staffMiddleware, getEventCheckinList);
-router.post('/undo/:registrationId', authMiddleware, staffMiddleware, undoCheckIn);
+router.post('/undo/:registrationId', authMiddleware, staffMiddleware, checkinPermission, undoCheckIn);
 
 export default router;

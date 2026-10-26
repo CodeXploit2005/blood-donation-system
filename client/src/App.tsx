@@ -44,7 +44,7 @@ const ProtectedRoute = ({ children, adminOnly = false, staffOnly = false, donorO
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if ((adminOnly && !isAdmin) || (staffOnly && !isAdmin && !isStaff)) {
+  if ((adminOnly && !isAdmin) || (staffOnly && !isStaff)) {
     return <Navigate to="/" replace />;
   }
 
@@ -221,9 +221,7 @@ export const App = () => {
           <Route
             path="checkin"
             element={
-              <PageTransition>
-                <Checkin />
-              </PageTransition>
+              <Navigate to="/admin/registrations" replace />
             }
           />
           <Route

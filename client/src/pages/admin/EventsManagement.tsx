@@ -20,6 +20,7 @@ export const EventsManagement = () => {
   const [editingEvent, setEditingEvent] = useState(null);
 
   const { data, isLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['admin-events', searchTerm, currentPage],
     queryFn: () =>
       eventService.getEvents({

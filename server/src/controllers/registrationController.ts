@@ -9,6 +9,7 @@ import { evaluateHealthScreening } from '../services/screeningService';
 import { generateRegistrationQR } from '../services/qrService';
 import { successResponse, errorResponse } from '../utils/response';
 import { resolveEventStatus } from '../services/eventStatusService';
+import { getEventDonationSummaries, emptyDonationSummary } from '../services/eventDonationService';
 import { donorBirthDate, donorPhone, donorName, donorEmail } from '../utils/donorValidation';
 import { birthDateError, vietnamToday } from '../utils/donorEligibility';
 
@@ -69,11 +70,13 @@ export const createRegistration = async (req: AuthRequest, res: Response): Promi
       return;
     }
 
-    if (event.statusMode !== 'manual') {
+    {
       const effectiveStatus = resolveEventStatus(
         event.startDate,
         event.endDate,
-        event.status
+        event.status,
+        new Date(),
+        event.statusMode
       );
       if (effectiveStatus !== event.status) {
         event.status = effectiveStatus;
@@ -301,7 +304,7 @@ export const getEventRegistrations = async (req: AuthRequest, res: Response): Pr
 
     successResponse(
       res,
-      { registrations, event },
+      { registrations, event, donationSummary: event ? (await getEventDonationSummaries([event._id])).get(String(event._id)) || emptyDonationSummary() : emptyDonationSummary() },
       'Lấy danh sách người đăng ký thành công',
       200,
       {
@@ -335,12 +338,31 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
       return;
     }
 
-    if (donationStatus === 'donated' && (!Number.isFinite(donationVolume) || donationVolume < 200 || donationVolume > 500 || !confirmedBloodType || confirmedBloodType === 'unknown')) {
+    const nextDonationStatus = donationStatus || existingRegistration.donationStatus;
+    const nextVolume = donationVolume !== undefined ? donationVolume : existingRegistration.donationVolume;
+    const nextBloodType = confirmedBloodType !== undefined ? confirmedBloodType : existingRegistration.confirmedBloodType;
+    if (nextDonationStatus === 'donated' && existingRegistration.donationStatus === 'screened_ineligible') {
+      errorResponse(res, 'Cần nhân viên y tế đánh giá lại đơn không đủ điều kiện trước khi ghi nhận hiến máu', 422); return;
+    }
+    if (nextDonationStatus === 'donated' && (!Number.isInteger(nextVolume) || Number(nextVolume) < 200 || Number(nextVolume) > 500 || !nextBloodType || !['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].includes(nextBloodType))) {
       errorResponse(res, 'Ghi nhận hiến máu cần thể tích thực tế 200–500 ml và nhóm máu đã xác nhận', 422); return;
     }
-    const updated = await Registration.findByIdAndUpdate(
-      id,
+    const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+    if (reason.length > 500) { errorResponse(res, 'Lý do điều chỉnh tối đa 500 ký tự', 422); return; }
+    const resultChanged = nextVolume !== existingRegistration.donationVolume || nextBloodType !== existingRegistration.confirmedBloodType || nextDonationStatus !== existingRegistration.donationStatus;
+    if (existingRegistration.donationStatus === 'donated' && resultChanged && !reason) {
+      errorResponse(res, 'Vui lòng nhập lý do điều chỉnh kết quả hiến máu', 422); return;
+    }
+    const updated = await Registration.findOneAndUpdate(
+      { _id: id, __v: existingRegistration.__v, donationStatus: existingRegistration.donationStatus },
       {
+        $inc: { __v: 1 },
+        ...(resultChanged && { $push: { resultHistory: {
+          at: new Date(), actorId: req.user!._id, actorName: req.user!.fullName, actorRole: req.user!.role,
+          reason: reason || 'Ghi nhận kết quả lần đầu',
+          before: { donationStatus: existingRegistration.donationStatus, donationVolume: existingRegistration.donationVolume, confirmedBloodType: existingRegistration.confirmedBloodType },
+          after: { donationStatus: nextDonationStatus, donationVolume: nextVolume, confirmedBloodType: nextBloodType },
+        } } }),
         ...(donationStatus && { donationStatus }),
         ...(confirmedBloodType !== undefined && { confirmedBloodType }),
         ...(donationVolume !== undefined && { donationVolume }),
@@ -358,7 +380,7 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
     ).populate('eventId', 'title');
 
     if (!updated) {
-      errorResponse(res, 'Không tìm thấy đơn đăng ký', 404);
+      errorResponse(res, 'Kết quả vừa được thay đổi ở nơi khác. Vui lòng tải lại trước khi lưu.', 409);
       return;
     }
 

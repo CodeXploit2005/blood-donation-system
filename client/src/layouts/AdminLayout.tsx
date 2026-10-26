@@ -45,7 +45,6 @@ export const AdminLayout = () => {
     { label: 'Bảng Điều Khiển', to: '/admin/dashboard', icon: LayoutDashboard, end: true },
     { label: 'Quản Lý Đợt Hiến', to: '/admin/events', icon: Calendar },
     { label: 'Danh Sách Đăng Ký', to: '/admin/registrations', icon: Users },
-    { label: 'Quét QR Điểm Danh', to: '/admin/checkin', icon: ScanLine, highlight: true },
     { label: 'Báo Cáo & Thống Kê', to: '/admin/reports', icon: FileBarChart },
     { label: 'Quản Lý Tài Khoản', to: '/admin/accounts', icon: UserCog },
   ];

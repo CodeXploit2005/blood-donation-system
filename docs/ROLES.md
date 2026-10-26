@@ -1,5 +1,12 @@
 # Ba luồng của Nhịp Sống
 
+## Cập nhật ngày 26/10/2026 — ưu tiên so với ma trận cũ bên dưới
+
+- Camera/quét QR và hoàn tác tiếp nhận chỉ dành cho `staff`; admin không có menu camera, truy cập URL cũ chuyển về danh sách đăng ký và API quét/hoàn tác trả 403.
+- Admin và staff được ghi nhận/chỉnh lượng máu, nhóm máu đã xác nhận trong danh sách đăng ký. Chỉ staff được nhập kết quả khám. Sửa kết quả đã hiến cần lý do, lưu người thực hiện, thời gian và dữ liệu trước/sau.
+- Thao tác ngừng hoạt động tài khoản giữ nguyên User và lịch sử liên quan, vô hiệu đăng nhập và token cũ. Không tái sử dụng email của tài khoản đó cho người khác.
+- User chỉ xem kết quả của mình; cache dữ liệu cá nhân tách theo userId và xóa khi đổi phiên.
+
 | Vai trò | Luồng | Quyền |
 | --- | --- | --- |
 | Người hiến máu (`user`) | Trang công khai, đăng ký, lịch sử, QR cá nhân | Quản lý đăng ký của bản thân |

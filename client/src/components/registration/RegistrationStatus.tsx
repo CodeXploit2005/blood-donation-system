@@ -9,6 +9,7 @@ import {
   SCREENING_RESULT_COLORS,
 } from '../../utils/constants';
 import Button from '../common/Button';
+import DonationResult from './DonationResult';
 
 export const RegistrationStatus = ({ registration, onCancel, isCancelling = false }) => {
   const {
@@ -46,7 +47,7 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
           {registrationStatus === 'donated' ? (
             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage border border-sage/40 flex items-center gap-1.5 shadow-sm">
               <CheckCircle2 className="w-3.5 h-3.5 text-sage" />
-              Đã hiến {registration.donationVolume ?? '—'}ml
+              {registration.donationVolume > 0 ? `Đã hiến ${registration.donationVolume} ml` : 'Đã hiến · chưa ghi ml'}
             </span>
           ) : (
             <span
@@ -111,6 +112,8 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
         </span>
       </div>
 
+      <div className="mb-4"><DonationResult registration={registration} /></div>
+
       {/* Footer action buttons */}
       <div className="flex items-center justify-between pt-3 border-t border-sand/60 dark:border-white/10">
         <span className="text-[11px] text-ink-muted dark:text-gray-400">
@@ -130,7 +133,7 @@ export const RegistrationStatus = ({ registration, onCancel, isCancelling = fals
             </Button>
           )}
 
-          <Link to={`/my-qr`}>
+          <Link to={`/my-qr?registrationId=${_id}`}>
             <Button
               variant="primary"
               size="sm"

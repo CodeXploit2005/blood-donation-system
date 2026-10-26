@@ -37,6 +37,8 @@ export const Button = ({
       'bg-sand text-ink hover:bg-sand-dark border border-sand-dark/50',
     ghost:
       'bg-transparent text-ink-light hover:text-crimson hover:bg-crimson-light/40 border border-transparent',
+    cancel:
+      'bg-transparent text-crimson border border-crimson hover:bg-crimson-light focus-visible:ring-2 focus-visible:ring-crimson focus-visible:ring-offset-2 focus-visible:ring-offset-porcelain-card',
     danger:
       'bg-rose-600 text-white hover:bg-rose-700 shadow-sm border border-transparent',
     dark:

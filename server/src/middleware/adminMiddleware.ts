@@ -41,22 +41,25 @@ export const cancelPermission = (req: AuthRequest, res: Response, next: NextFunc
 };
 
 export const registrationUpdatePermission = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  // Admin may cancel registrations. Clinical results belong to medical staff.
+  // Admin can record donation results; medical screening remains staff-only.
   const fields = Object.keys(req.body || {});
+  const adminDonation = req.user?.role === 'admin' &&
+    req.body.donationStatus === 'donated' &&
+    ['donationVolume', 'confirmedBloodType'].every(field => fields.includes(field)) &&
+    fields.every(field => ['donationStatus', 'donationVolume', 'confirmedBloodType', 'reason'].includes(field));
   const permitted = req.user?.role === 'staff'
-    ? fields.length > 0 && fields.every(field => ['donationStatus', 'confirmedBloodType', 'donationVolume', 'screeningResult'].includes(field)) && ['screened_eligible', 'screened_ineligible', 'donated', undefined].includes(req.body.donationStatus)
-    : req.user?.role === 'admin' && fields.length === 1 && fields[0] === 'donationStatus' && req.body.donationStatus === 'cancelled';
+    ? fields.length > 0 && fields.every(field => ['donationStatus', 'confirmedBloodType', 'donationVolume', 'screeningResult', 'reason'].includes(field)) && ['screened_eligible', 'screened_ineligible', 'donated', undefined].includes(req.body.donationStatus)
+    : adminDonation || (req.user?.role === 'admin' && fields.length === 1 && fields[0] === 'donationStatus' && req.body.donationStatus === 'cancelled');
   if (!permitted) {
-    errorResponse(res, 'Chỉ nhân viên y tế được nhập kết quả khám và xác nhận hiến máu; admin chỉ được hủy đăng ký', 403);
+    errorResponse(res, 'Chỉ nhân viên y tế được nhập kết quả khám; admin hoặc nhân viên y tế được ghi nhận lượng máu hiến', 403);
     return;
   }
   next();
 };
 
 export const checkinPermission = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  const clinicalFields = ['actualVolumeMl', 'confirmedBloodType', 'nurseNotes', 'bloodPressure', 'hemoglobinLevel'];
-  if (req.user?.role === 'admin' && (clinicalFields.some(field => req.body?.[field] !== undefined) || (req.body?.preview !== true && req.body?.action !== 'presence'))) {
-    errorResponse(res, 'Admin chỉ được tra cứu QR và xác nhận có mặt; kết quả y tế thuộc nhân viên y tế', 403);
+  if (req.user?.role !== 'staff') {
+    errorResponse(res, 'Chỉ tài khoản nhân viên y tế được quét QR và điểm danh', 403);
     return;
   }
   next();

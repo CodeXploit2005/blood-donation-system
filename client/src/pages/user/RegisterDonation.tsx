@@ -18,6 +18,7 @@ export const RegisterDonation = () => {
   const { success, warning, error: toastError } = useToast();
 
   const { data, isLoading, error } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['event-for-reg', eventId],
     queryFn: () => eventService.getEventById(eventId),
     enabled: !!eventId,
@@ -123,11 +124,15 @@ export const RegisterDonation = () => {
       </div>
 
       {/* 3-Step Screening Form */}
-      <ScreeningForm
+      {event.status !== 'open' ? (
+        <p className="p-5 rounded-2xl border border-sand bg-porcelain-card text-center text-ink">
+          {event.status === 'upcoming' ? 'Đợt hiến máu chưa mở đăng ký.' : 'Đợt hiến máu đã đóng tiếp nhận đăng ký.'}
+        </p>
+      ) : <ScreeningForm
         event={event}
         user={user}
         onSubmit={handleRegistrationSubmit}
-      />
+      />}
     </div>
   );
 };

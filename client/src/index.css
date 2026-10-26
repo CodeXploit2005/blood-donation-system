@@ -51,6 +51,32 @@
 }
 
 @layer base {
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  /* Native calendar icons and popovers must follow the selected app theme. */
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    color-scheme: light;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="datetime-local"],
+  .dark input[type="time"] {
+    color-scheme: dark;
+  }
+
+  input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+
   body {
     background-color: var(--bg-page);
     color: var(--text-primary);

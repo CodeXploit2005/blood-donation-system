@@ -13,6 +13,7 @@ export const Events = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading } = useQuery({
+    refetchInterval: 15000,
     queryKey: ['events-list', statusFilter, searchTerm, currentPage],
     queryFn: () =>
       eventService.getEvents({

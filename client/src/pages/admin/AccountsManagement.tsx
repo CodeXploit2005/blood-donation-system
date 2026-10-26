@@ -39,14 +39,14 @@ export const AccountsManagement = () => {
   });
 
   const handleDelete = (account) => {
-    if (window.confirm(`Bạn có chắc muốn xóa tài khoản “${account.fullName}”? Thao tác này không thể hoàn tác.`)) {
+    if (window.confirm(`Ngừng hoạt động tài khoản “${account.fullName}”? Tài khoản sẽ không đăng nhập được; lịch sử hiến máu vẫn được giữ nguyên.`)) {
       deleteMutation.mutate(account._id);
     }
   };
 
   if (isLoading) return <Loading fullScreen text="Đang tải danh sách tài khoản..." />;
 
-  const adminCount = users.filter((user) => user.role === 'admin').length;
+  const adminCount = users.filter((user) => user.role === 'admin' && user.isActive !== false).length;
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -65,14 +65,14 @@ export const AccountsManagement = () => {
 
       <div className="overflow-x-auto rounded-3xl border border-sand dark:border-white/10 bg-porcelain-card dark:bg-ink-card shadow-warm">
         <table className="w-full min-w-[840px] text-left text-xs">
-          <thead className="bg-sand-light/70 dark:bg-ink-deep text-ink-muted uppercase tracking-wider text-[11px]"><tr><th className="px-5 py-4">Tài khoản</th><th className="px-4 py-4">Liên hệ</th><th className="px-4 py-4">Ngày tạo</th><th className="px-4 py-4 text-center">Vai trò</th><th className="px-5 py-4 text-right">Cấp quyền</th><th className="px-5 py-4 text-right">Xóa</th></tr></thead>
+          <thead className="bg-sand-light/70 dark:bg-ink-deep text-ink-muted uppercase tracking-wider text-[11px]"><tr><th className="px-5 py-4">Tài khoản</th><th className="px-4 py-4">Liên hệ</th><th className="px-4 py-4">Ngày tạo</th><th className="px-4 py-4 text-center">Vai trò</th><th className="px-5 py-4 text-right">Cấp quyền</th><th className="px-5 py-4 text-right">Ngừng hoạt động</th></tr></thead>
           <tbody className="divide-y divide-sand/60 dark:divide-white/10">
             {filteredUsers.map((account) => {
               const isCurrentUser = account._id === currentUser?._id;
-              const updating = (roleMutation.isPending && roleMutation.variables?.id === account._id) || (deleteMutation.isPending && deleteMutation.variables === account._id);
+              const updating = account.isActive === false || (roleMutation.isPending && roleMutation.variables?.id === account._id) || (deleteMutation.isPending && deleteMutation.variables === account._id);
               return <tr key={account._id} className="hover:bg-sand-light/30 dark:hover:bg-white/5">
                 <td className="px-5 py-4"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-full bg-crimson-light dark:bg-crimson/25 text-crimson dark:text-rose-300 flex items-center justify-center font-bold"><UserRound className="w-4 h-4" /></div><div><p className="font-bold text-ink dark:text-white">{account.fullName}{isCurrentUser && <span className="ml-2 text-[10px] text-crimson">(Bạn)</span>}</p><p className="text-ink-muted mt-0.5">{account.email}</p></div></div></td>
-                <td className="px-4 py-4 text-ink-light dark:text-gray-300">{account.phone}</td><td className="px-4 py-4 text-ink-muted">{formatDate(account.createdAt)}</td>
+                <td className="px-4 py-4 text-ink-light dark:text-gray-300">{account.phone}{account.isActive === false && <span className="block mt-1 text-crimson">Đã ngừng hoạt động</span>}</td><td className="px-4 py-4 text-ink-muted">{formatDate(account.createdAt)}</td>
                 <td className="px-4 py-4 text-center"><span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold ${account.role === 'admin' ? 'bg-crimson-light dark:bg-crimson/25 text-crimson dark:text-rose-300' : 'bg-sage-light dark:bg-sage/20 text-sage-deep dark:text-sage'}`}>{account.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}{account.role === 'admin' ? 'Quản trị viên' : account.role === 'staff' ? 'Nhân viên y tế' : 'Người hiến máu'}</span></td>
                 <td className="px-5 py-4 text-right"><select value={account.role} disabled={updating || isCurrentUser} onChange={(event) => roleMutation.mutate({ id: account._id, role: event.target.value as 'admin' | 'staff' | 'user' })} className="rounded-lg border border-sand dark:border-white/15 bg-porcelain dark:bg-ink-deep px-2.5 py-1.5 font-semibold text-ink dark:text-white outline-none focus:border-crimson disabled:opacity-60"><option value="user">Người hiến máu</option><option value="staff">Nhân viên y tế</option><option value="admin">Quản trị viên</option></select></td>
                 <td className="px-5 py-4 text-right"><button type="button" disabled={updating || isCurrentUser} onClick={() => handleDelete(account)} title={isCurrentUser ? 'Không thể xóa tài khoản đang đăng nhập' : `Xóa ${account.fullName}`} className="inline-flex items-center justify-center rounded-lg border border-rose-200 dark:border-rose-900/60 p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="w-4 h-4" /></button></td>

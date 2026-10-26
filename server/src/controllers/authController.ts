@@ -98,7 +98,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
-    if (!user) {
+    if (!user || user.isActive === false) {
       errorResponse(res, 'Tài khoản hoặc mật khẩu không chính xác', 401);
       return;
     }

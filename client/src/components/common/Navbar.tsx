@@ -14,6 +14,7 @@ import {
   X,
   PlusCircle,
   ScanLine,
+  FileBarChart,
   Sun,
   Moon,
 } from 'lucide-react';
@@ -98,7 +99,7 @@ export const Navbar = () => {
                   Người Đăng Ký
                 </NavLink>
                 <NavLink
-                  to="/admin/checkin"
+                  to="/admin/reports"
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition-all ${
                       isActive
@@ -107,8 +108,8 @@ export const Navbar = () => {
                     }`
                   }
                 >
-                  <ScanLine className="w-3.5 h-3.5" />
-                  Quét QR
+                  <FileBarChart className="w-3.5 h-3.5" />
+                  Báo cáo
                 </NavLink>
               </div>
             )}
@@ -251,7 +252,7 @@ export const Navbar = () => {
             </button>
 
             {isAuthenticated && (
-              <Link to={isStaff ? '/staff/checkin' : isAdmin ? '/admin/checkin' : '/my-qr'} className="p-2 text-crimson dark:text-white">
+              <Link to={isStaff ? '/staff/checkin' : isAdmin ? '/admin/reports' : '/my-qr'} className="p-2 text-crimson dark:text-white">
                 {isAdmin || isStaff ? <ScanLine className="w-5 h-5" /> : <QrCode className="w-5 h-5" />}
               </Link>
             )}
@@ -346,13 +347,6 @@ export const Navbar = () => {
                     className={navLinkClasses}
                   >
                     Danh Sách Đăng Ký
-                  </NavLink>
-                  <NavLink
-                    to="/admin/checkin"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={navLinkClasses}
-                  >
-                    Quét Mã Điểm Danh
                   </NavLink>
                   <NavLink
                     to="/admin/reports"

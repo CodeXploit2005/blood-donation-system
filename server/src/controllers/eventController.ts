@@ -5,6 +5,7 @@ import { Registration } from '../models/Registration';
 import { successResponse, errorResponse } from '../utils/response';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { resolveEventStatus, syncAutomaticEventStatuses } from '../services/eventStatusService';
+import { getEventDonationSummaries, emptyDonationSummary } from '../services/eventDonationService';
 
 export const eventSchema = z.object({
   body: z.object({
@@ -12,8 +13,8 @@ export const eventSchema = z.object({
     description: z.string().min(10, 'Mô tả chi tiết phải từ 10 ký tự trở lên'),
     location: z.string().min(3, 'Địa điểm tổ chức phải từ 3 ký tự trở lên'),
     addressDetails: z.string().min(5, 'Địa chỉ cụ thể phải từ 5 ký tự trở lên'),
-    startDate: z.string().min(1, 'Vui lòng chọn thời gian bắt đầu'),
-    endDate: z.string().min(1, 'Vui lòng chọn thời gian kết thúc'),
+    startDate: z.string().min(1, 'Vui lòng chọn thời gian bắt đầu').refine(value => Number.isFinite(Date.parse(value)), 'Thời gian bắt đầu không hợp lệ'),
+    endDate: z.string().min(1, 'Vui lòng chọn thời gian kết thúc').refine(value => Number.isFinite(Date.parse(value)), 'Thời gian kết thúc không hợp lệ'),
     maxParticipants: z.number().min(1, 'Số lượng người tối đa phải lớn hơn 0'),
     status: z.enum(['upcoming', 'open', 'closed', 'completed']).optional(),
     statusMode: z.enum(['auto', 'manual']).optional(),
@@ -72,11 +73,13 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
     ]);
 
     const countMap = new Map();
+    const donationSummaries = await getEventDonationSummaries(eventIds);
     registrationCounts.forEach((r) => countMap.set(r._id.toString(), r.count));
 
     const eventsWithCount = events.map((evt) => ({
       ...evt,
       currentParticipants: countMap.get(evt._id.toString()) || 0,
+      donationSummary: donationSummaries.get(String(evt._id)) || emptyDonationSummary(),
     }));
 
     successResponse(
@@ -163,7 +166,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       startDate: start,
       endDate: end,
       maxParticipants,
-      status: statusMode === 'auto' ? resolveEventStatus(start, end, status) : status,
+      status: resolveEventStatus(start, end, status, new Date(), statusMode),
       statusMode,
       imageUrl: imageUrl || 'https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&q=80&w=1000',
       organizer: organizer || 'Hội Chữ Thập Đỏ & Viện Huyết học',
@@ -215,9 +218,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
     const nextEndDate = endDate ? new Date(endDate) : existingEvent.endDate;
     const nextStatusMode = statusMode || existingEvent.statusMode || 'auto';
     const requestedStatus = status || existingEvent.status;
-    const nextStatus = nextStatusMode === 'auto'
-      ? resolveEventStatus(nextStartDate, nextEndDate, requestedStatus)
-      : requestedStatus;
+    const nextStatus = resolveEventStatus(nextStartDate, nextEndDate, requestedStatus, new Date(), nextStatusMode);
 
     const updatedEvent = await BloodDonationEvent.findByIdAndUpdate(
       id,

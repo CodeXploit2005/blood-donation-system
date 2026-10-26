@@ -5,6 +5,11 @@ import { eventFormSchema } from '../../utils/validators';
 import Button from '../common/Button';
 import { Calendar, MapPin, Building, Phone, Image, Users, FileText } from 'lucide-react';
 
+const toLocalInput = (value) => {
+  const date = new Date(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+
 export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onCancel }) => {
   const fileInputRef = useRef(null);
   const [imageError, setImageError] = useState('');
@@ -70,10 +75,10 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
             ? initialData.status
             : 'auto',
         startDate: initialData.startDate
-          ? new Date(initialData.startDate).toISOString().slice(0, 16)
+          ? toLocalInput(initialData.startDate)
           : '',
         endDate: initialData.endDate
-          ? new Date(initialData.endDate).toISOString().slice(0, 16)
+          ? toLocalInput(initialData.endDate)
           : '',
       });
     }
@@ -85,6 +90,8 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
         const { statusSelection, ...eventData } = data;
         onSubmit({
           ...eventData,
+          startDate: new Date(eventData.startDate).toISOString(),
+          endDate: new Date(eventData.endDate).toISOString(),
           status: statusSelection === 'auto' ? 'upcoming' : statusSelection,
           statusMode: statusSelection === 'auto' ? 'auto' : 'manual',
         });
@@ -313,7 +320,7 @@ export const EventForm = ({ initialData = null, onSubmit, isLoading = false, onC
       {/* Form Buttons */}
       <div className="sticky -bottom-4 sm:-bottom-6 z-10 -mx-4 sm:-mx-8 mt-5 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3 border-t border-sand/60 bg-porcelain-card dark:bg-[#1A1E22] px-4 sm:px-8 pb-1 pt-4 sm:pb-2">
         {onCancel && (
-          <Button className="w-full sm:w-auto" variant="ghost" onClick={onCancel} disabled={isLoading}>
+          <Button className="w-full sm:w-auto" variant="cancel" onClick={onCancel} disabled={isLoading}>
             Hủy Bỏ
           </Button>
         )}
